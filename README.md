@@ -2,9 +2,10 @@
 
 A single-page budget, expense log and investment ledger that runs entirely in
 your browser. One HTML file, no build step, no accounts, no backend. Open it
-from a URL or from a file on disk and it works the same either way; everything
-you enter stays in that browser's `localStorage` unless you explicitly export it
-or turn on cloud sync.
+from a URL or from a file on disk — identical either way, except that cloud
+sync needs the hosted copy (a `file://` page has no origin and no database will
+accept its calls). Everything you enter stays in that browser's `localStorage`
+unless you explicitly export it or turn sync on.
 
 **Live: https://talon270.github.io/ledger/**
 
