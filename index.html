@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" id="themeColor" content="#f1eee6" />
+<meta name="theme-color" id="themeColor" content="#e9e5dd" />
 <title>ledger — budget · expenses · investments</title>
 <!-- No network dependency of any kind: this file opens from disk, on a plane,
      in ten years. Chart.js 4.4.1 (MIT) is vendored inline below rather than
@@ -33,86 +33,106 @@
 
 </script>
 <style>
-/* ══════════════════════════════════════════════════════════════════════════
-   LEDGER · SKIN — "quiet e-ink"
-   · One paper tone, one ink tone, hairline rules. No gradients and no glow: an
-     e-ink panel cannot render either, so nothing here pretends it can.
-   · Controls are soft objects, not boxes. A button is a rounded fill with no
-     border; a border appears only where two surfaces genuinely meet. Depth is
-     a single wide, faint shadow reserved for what actually floats — the menu,
-     a dialog, the toast.
-   · Emphasis is warmth, not weight. The primary action is sepia, the selected
-     section is a sepia rule under the label. Nothing on the page is pure ink
-     except the text itself.
+/* ════════════════════════════════════════════════════════════════════════════
+   LEDGER · SKIN — "neomorphic"
+   · One surface, lit from the top-left. Every element is the SAME colour as the
+     page; it is told apart by relief, not by fill. --up extrudes it, --down
+     presses it in, --flat is the hairline version for rows inside a card.
+   · Inputs are pressed in, buttons stand out. That is the whole affordance
+     grammar, and it is the one thing this style gets right that a flat UI does
+     not: you can see where you are meant to type.
+   · Where neomorphism normally fails is text. It does not fail here: the ink
+     tones are unchanged from the e-ink build (--fg0 at 13.3:1 on the surface in
+     paper, 12.1:1 in night), the primary action stays a filled sepia block
+     rather than a same-colour bump, and the focus ring is a real outline. A
+     control whose only signal is a 6px shadow is unusable in sunlight — so no
+     control here has only that.
    · Colour is kept only where it carries a fact (over budget, gain, loss) and
-     is desaturated to a printed-ink wash. A fully greyscale app would lose the
-     one signal this tool exists to give, so this is a deliberate exception.
-   · Motion is the page refresh, not decoration: a wipe on section change and a
-     short rise for the blocks. All of it dies under prefers-reduced-motion.
+     is desaturated to a printed-ink wash.
    Palette tokens keep their legacy names (--bg0..--bg4, --fg0..--fg4, --red…)
    because render code emits `var(--x)` inline.
-   ══════════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════ */
 
-/* ── paper (default) ── */
+/* ── day ── */
 :root{
-  --bg0h:#f1eee6; --bg0:#faf8f3; --bg1:#eae6dc; --bg2:#d7d1c3; --bg3:#b2a996; --bg4:#928a78;
-  --fg0:#1a1814; --fg1:#33302a; --fg2:#4d483f; --fg3:#6b6558; --fg4:#746c5b; --gray:#746c5b;
-  --red:#9b3222; --green:#3f6b33; --yellow:#8a6a1f; --blue:#2f5d7c; --purple:#6d4470; --aqua:#2f6f63; --orange:#925a12;
+  /* the one surface. bg0h (page) and bg0 (card) are deliberately IDENTICAL —
+     relief does the separating. bg1/bg2 exist only as recessed wells and
+     dividers, so they stay within a few points of it. */
+  --bg0h:#e9e5dd; --bg0:#e9e5dd; --bg1:#e2ded5; --bg2:#d5d0c5; --bg3:#a8a294; --bg4:#8b8474;
+  --fg0:#1a1814; --fg1:#33302a; --fg2:#4d483f; --fg3:#65604f; --fg4:#686252; --gray:#686252;
+  --red:#9b3222; --green:#3a6430; --yellow:#7f611b; --blue:#2b5674; --purple:#653f68; --aqua:#2a665b; --orange:#8a5410;
   --red-d:#7c281b; --green-d:#325528; --yellow-d:#6e5518; --blue-d:#254a63; --purple-d:#573658; --aqua-d:#25594f; --orange-d:#815114;
-  --line:#d3ccbc;          /* hairline. every structural border */
-  --rule:#1a1814;          /* ink. the one heavy mark per screen */
-  --veil:#1a1814;          /* the refresh wipe. ALWAYS darker than the page */
-  --on-rule:#faf8f3;       /* paper, printed on ink */
-  --acc:#8a5a2b;           /* sepia. carries every emphasis the text doesn't */
-  --acc-h:#734822;         /* sepia, pressed */
-  --on-acc:#faf8f3;        /* paper, printed on sepia */
-  --ring:rgba(138,90,43,.14);
-  --ctl:#e3ded0;           /* control fill for anything sitting on the page itself */
-  --fs:14.5px;             /* reading size. the Aa control moves this one value */
-  --r:8px; --r-sm:5px; --r-lg:12px;   /* nothing is square except the page */
-  --soft:0 1px 2px rgba(26,24,20,.05),0 10px 26px rgba(26,24,20,.07);
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+
+  /* the two lights. every shadow in the file is built from exactly these. */
+  --nm-lt:#ffffff;
+  --nm-dk:#bfb9ab;
+  --up:6px 6px 13px var(--nm-dk),-6px -6px 13px var(--nm-lt);
+  --up-sm:3px 3px 6px var(--nm-dk),-3px -3px 6px var(--nm-lt);
+  --up-xs:2px 2px 4px var(--nm-dk),-2px -2px 4px var(--nm-lt);
+  --down:inset 3px 3px 6px var(--nm-dk),inset -3px -3px 6px var(--nm-lt);
+  --down-sm:inset 2px 2px 4px var(--nm-dk),inset -2px -2px 4px var(--nm-lt);
+  --float:0 20px 52px rgba(26,24,20,.30),0 3px 10px rgba(26,24,20,.14);
+
+  --line:rgba(26,24,20,.05); /* hairline. kept at 5% — relief alone loses the
+                                edge of a card on a dim or glossy screen */
+  --rule:#1a1814;
+  --veil:#1a1814;
+  --on-rule:#e9e5dd;
+  --acc:#8a5a2b;
+  --acc-h:#734822;
+  --on-acc:#faf8f3;
+  --ring:rgba(138,90,43,.16);
+  --ctl:#e9e5dd;
+  --fs:14.5px;
+  --r:12px; --r-sm:9px; --r-lg:20px;   /* relief needs radius: a sharp corner
+                                          reads as a rendering artefact here */
+  --soft:var(--float);
   --serif:'Bookerly','Literata','Iowan Old Style','Source Serif 4','Charter',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --accent:var(--acc);
 }
-/* ── night: the same page under a reading light, not a glowing screen. Ink and
-      paper swap, contrast drops slightly because a dark panel at full white is
-      glare, not text. ── */
+/* ── night: the same surface under one lamp. The highlight cannot be white
+      here — white on a near-black card is a rim light, not a soft edge — so it
+      drops to a lifted grey and the shade goes to near-black. ── */
 [data-theme="dark"]{
-  --bg0h:#141311; --bg0:#1b1a17; --bg1:#242220; --bg2:#312e29; --bg3:#4b463f; --bg4:#6d675c;
+  --bg0h:#232120; --bg0:#232120; --bg1:#1f1d1c; --bg2:#2e2b29; --bg3:#4b463f; --bg4:#6d675c;
   --fg0:#ece7dd; --fg1:#dbd5c9; --fg2:#bfb8aa; --fg3:#9b9484; --fg4:#958e7c; --gray:#958e7c;
   --red:#d9715c; --green:#8aab6a; --yellow:#c9a75a; --blue:#7099b8; --purple:#b087b3; --aqua:#6aa99a; --orange:#c98a4e;
-  --red-d:#b45a48; --green-d:#6f8b55; --yellow-d:#a3853f; --blue-d:#5a7d96; --purple-d:#8f6e92; --aqua-d:#55897d; --orange-d:#a5713f;
-  --line:#312e29;
+  --red-d:#b45a48; --green-d:#6f8b55; --yellow-d:#a3853f; --blue-d:#5a7d96; --purple-d:#8f6e92; --aqua-d:#a5713f; --orange-d:#a5713f;
+
+  --nm-lt:#2f2c2a;
+  --nm-dk:#141312;
+  --up:6px 6px 13px var(--nm-dk),-6px -6px 13px var(--nm-lt);
+  --up-sm:3px 3px 6px var(--nm-dk),-3px -3px 6px var(--nm-lt);
+  --up-xs:2px 2px 4px var(--nm-dk),-2px -2px 4px var(--nm-lt);
+  --down:inset 3px 3px 6px var(--nm-dk),inset -3px -3px 6px var(--nm-lt);
+  --down-sm:inset 2px 2px 4px var(--nm-dk),inset -2px -2px 4px var(--nm-lt);
+  --float:0 20px 52px rgba(0,0,0,.62),0 3px 10px rgba(0,0,0,.45);
+
+  --line:rgba(236,231,221,.06);
   --rule:#ece7dd; --on-rule:#141311;
-  /* --rule inverts to paper so borders read on a dark page — the wipe must
-     NOT follow it there. A white sheet over a near-black page at 9% is a
-     43% brightness spike: a camera flash, not a page turn. */
+  /* the wipe must NOT follow --rule here. A white sheet over a near-black page
+     at 9% is a 43% brightness spike: a camera flash, not a page turn. */
   --veil:#000;
   --acc:#c69a6d; --acc-h:#d9b087; --on-acc:#17160f;
-  --ctl:#2b2825;
-  --ring:rgba(198,154,109,.18);
-  --soft:0 1px 2px rgba(0,0,0,.35),0 12px 30px rgba(0,0,0,.5);
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
+  --ctl:#232120;
+  --ring:rgba(198,154,109,.20);
+  --soft:var(--float);
 }
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   font-family:var(--serif);
+  /* one flat surface, and nothing layered over it: relief does the separating
+     and any texture or blend here fights the shadow gradient. */
   background-color:var(--bg0h);
-  /* the faint speckle of an e-ink panel, drawn not downloaded. Sits behind the
-     cards, so it never touches a line of text. */
-  background-image:var(--grain);
-  background-blend-mode:multiply;
   color:var(--fg1);
-  font-size:var(--fs); line-height:1.65; padding-bottom:52px;
+  font-size:var(--fs); line-height:1.65; padding-bottom:70px;
   -webkit-font-smoothing:antialiased;
   transition:background-color .3s,color .3s;
 }
-[data-theme="dark"] body{background-blend-mode:screen}
-button,input,select,textarea{font-family:var(--mono); font-size:12.5px; color:inherit}
+button,input,select,textarea{font-family:var(--mono); font-size:13px; color:inherit}
 button{cursor:pointer; border:none; background:none}
 .num,kbd,code{font-family:var(--mono);font-variant-numeric:tabular-nums}
 ::selection{background:var(--rule); color:var(--on-rule)}
@@ -165,55 +185,62 @@ button{cursor:pointer; border:none; background:none}
 .logo b{font-weight:600;font-size:22px;letter-spacing:-.015em;color:var(--fg0)}
 .logo span{color:var(--fg4);font-size:11px;font-family:var(--mono)}
 .hdr-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-.kbtn{height:32px;padding:0 12px;border:1px solid transparent;border-radius:var(--r);
-  background:var(--ctl);color:var(--fg2);
-  font-size:12px;font-family:var(--mono);display:flex;align-items:center;gap:6px;
-  transition:background-color .15s,color .15s}
-.kbtn:hover{background:var(--bg2);color:var(--fg0)}
-.kbtn:active{background:var(--bg2)}
-.kbtn.on{background:var(--bg2);color:var(--fg0)}
+.kbtn{height:38px;padding:0 14px;border:none;border-radius:var(--r);
+  background:var(--ctl);color:var(--fg2);box-shadow:var(--up-sm);
+  font-size:12.5px;font-family:var(--mono);display:flex;align-items:center;gap:6px;
+  transition:box-shadow .15s,color .15s}
+.kbtn:hover{color:var(--fg0);box-shadow:var(--up)}
+/* pressed means pressed IN. the only state change a soft control can make that
+   is legible without colour. */
+.kbtn:active{color:var(--fg0);box-shadow:var(--down-sm)}
+.kbtn.on{color:var(--fg0);box-shadow:var(--down-sm)}
 .kbtn select{background:none;border:none;outline:none;color:inherit;font-weight:600;cursor:pointer;font-size:12px}
-.kbtn.past{background:var(--ring);color:var(--acc)}
+.kbtn.past{color:var(--acc);box-shadow:var(--down-sm),0 0 0 1px var(--ring)}
 .menuwrap{position:relative}
-.menu{position:absolute;right:0;top:38px;z-index:60;min-width:250px;background:var(--bg0);
-  border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--soft);
-  padding:6px;display:none;flex-direction:column}
+.menu{position:absolute;right:0;top:44px;z-index:60;min-width:260px;background:var(--bg0);
+  border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--float);
+  padding:8px;display:none;flex-direction:column}
 .menu.open{display:flex;animation:drop .15s ease-out both}
-.menu button{text-align:left;padding:8px 11px;border-radius:var(--r-sm);color:var(--fg2);font-size:12.5px;
-  display:flex;gap:9px;width:100%;transition:background-color .12s,color .12s}
-.menu button:hover{background:var(--bg1);color:var(--fg0)}
+.menu button{text-align:left;padding:11px 12px;border-radius:var(--r-sm);color:var(--fg2);font-size:13px;
+  display:flex;gap:9px;width:100%;transition:box-shadow .12s,color .12s}
+.menu button:hover{color:var(--fg0);box-shadow:var(--up-xs)}
+.menu button:active{box-shadow:var(--down-sm)}
 .menu button .k{margin-left:auto;color:var(--fg4);font-size:11px}
 .menu .sep{height:1px;background:var(--line);margin:5px 6px}
 .menu button.danger{color:var(--red)}
 
 /* the selected section is marked the way a reader marks a place: a rule under
    the word, drawn in as you arrive, not a block of ink around it */
-.tabline{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:24px;overflow-x:auto}
-.tab{position:relative;padding:9px 14px;border:none;border-radius:var(--r) var(--r) 0 0;
-  color:var(--fg3);font-size:12.5px;font-family:var(--mono);white-space:nowrap;
-  transition:color .15s,background-color .15s}
+/* the track is pressed in and the tabs sit inside it; the open one lifts out.
+   The sepia rule stays on top of that — relief alone does not survive a
+   screenshot, a projector, or anyone with low vision. */
+.tabline{display:flex;gap:4px;padding:5px;border-radius:var(--r-lg);box-shadow:var(--down-sm);
+  margin-bottom:26px;overflow-x:auto}
+.tab{position:relative;padding:11px 18px;border:none;border-radius:var(--r);
+  color:var(--fg3);font-size:13.5px;font-family:var(--mono);white-space:nowrap;
+  transition:color .15s,box-shadow .15s}
 .tab .n{color:var(--fg4);margin-right:7px}
-.tab:hover{color:var(--fg1);background:var(--bg1)}
-.tab.active{color:var(--fg0);font-weight:600}
+.tab:hover{color:var(--fg1)}
+.tab.active{color:var(--fg0);font-weight:600;box-shadow:var(--up-sm)}
 .tab.active .n{color:var(--acc)}
-.tab.active::after{content:"";position:absolute;left:11px;right:11px;bottom:-1px;height:2px;
+.tab.active::after{content:"";position:absolute;left:14px;right:14px;bottom:5px;height:2px;
   border-radius:2px;background:var(--acc);transform-origin:left;
   animation:underline .3s cubic-bezier(.25,.7,.3,1) both}
 
 /* ── banners ── */
-.banner{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:11px 14px;margin:-8px 0 20px;
-  border:1px solid var(--line);border-radius:var(--r-lg);background:var(--bg1);
+.banner{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:14px 18px;margin:-8px 0 20px;
+  border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--up-sm);
   font-size:.9em;color:var(--fg2);animation:rise .3s ease-out both}
 .banner b{color:var(--fg0)}
 .banner .bl{margin-left:auto;display:flex;gap:7px}
-.banner.warn{border-color:var(--orange)}
+.banner.warn{border-color:var(--orange);box-shadow:var(--up-sm),inset 3px 0 0 var(--orange)}
 .banner.warn .ic{color:var(--orange)}
-.banner.ro{border-color:var(--blue)}
+.banner.ro{border-color:var(--blue);box-shadow:var(--up-sm),inset 3px 0 0 var(--blue)}
 .banner.ro .ic{color:var(--blue)}
 
 /* ── panels (legend on border) ── */
 .panel{position:relative;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--bg0);
-  padding:24px 20px 20px;margin-bottom:20px}
+  box-shadow:var(--up);padding:26px 22px 22px;margin-bottom:24px}
 .panel > .ptitle{position:absolute;top:-8px;left:14px;background:var(--bg0);padding:0 8px;font-size:10px;
   font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--fg3);font-weight:600;margin:0}
 .panel > .ptitle b{color:var(--fg1);font-weight:600}
@@ -230,8 +257,8 @@ button{cursor:pointer; border:none; background:none}
 
 /* ── stat blocks ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);
-  border-radius:var(--r-lg);overflow:hidden;background:var(--bg0);margin-bottom:20px}
-.st{padding:16px 18px;border-right:1px solid var(--line)}
+  border-radius:var(--r-lg);overflow:hidden;background:var(--bg0);box-shadow:var(--up);margin-bottom:24px}
+.st{padding:18px 20px;border-right:1px solid var(--line)}
 .st:last-child{border-right:none}
 .st:nth-child(5):last-child{grid-column:1/-1;border-right:none;border-top:1px solid var(--line)}
 .st .l{font-size:10.5px;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--fg4);font-weight:600}
@@ -248,15 +275,15 @@ button{cursor:pointer; border:none; background:none}
 .gmeta .row{display:flex;gap:10px;font-size:.9em;padding:6px 0;color:var(--fg2);border-bottom:1px solid var(--bg1)}
 .gmeta .row:last-child{border-bottom:none}
 .gmeta .row b{color:var(--fg0);font-weight:600;margin-left:auto;padding-left:18px}
-.trend{display:inline-block;margin-top:12px;font-size:11.5px;font-family:var(--mono);padding:3px 11px;
-  border:1px solid transparent;border-radius:999px;background:var(--bg1)}
+.trend{display:inline-block;margin-top:14px;font-size:12px;font-family:var(--mono);padding:5px 13px;
+  border:none;border-radius:999px;box-shadow:var(--down-sm)}
 .trend.up{color:var(--green)} .trend.down{color:var(--red)} .trend.flat{color:var(--fg4)}
 
 /* ── meter: a solid bar on a ruled track, the way a reader shows progress ── */
-.meter{height:8px;background:var(--bg1);position:relative;overflow:hidden;margin-top:11px;border-radius:999px}
+.meter{height:9px;background:var(--bg1);box-shadow:var(--down-sm);position:relative;overflow:hidden;margin-top:12px;border-radius:999px}
 .meter > i{display:block;height:100%;width:0;border-radius:999px;
   transition:width .55s cubic-bezier(.25,.7,.3,1),background-color .2s}
-.meter.thin{height:6px}
+.meter.thin{height:7px}
 .meter .pace{position:absolute;top:0;bottom:0;width:2px;border-radius:2px;background:var(--bg0);opacity:.85}
 
 /* ── list rows ── */
@@ -285,11 +312,16 @@ button{cursor:pointer; border:none; background:none}
   border:1px solid currentColor;text-transform:uppercase;opacity:.9}
 .tag.warn{color:var(--orange)} .tag.over{color:var(--red)} .tag.ok{color:var(--green)} .tag.dim{color:var(--fg4)}
 .acts{display:flex;gap:4px;margin-left:8px}
-.ib{width:26px;height:26px;border:none;border-radius:50%;color:var(--fg4);font-size:12px;line-height:1;
-  transition:background-color .12s,color .12s}
-.ib:hover{color:var(--fg0);background:var(--bg1)}
-.ib.del:hover{background:var(--ring);color:var(--red)}
-.ib.go:hover{background:var(--ring);color:var(--green)}
+/* 26px was below every touch-target guideline there is and the icon sat at 30%
+   opacity until you hovered the row — on a phone it was invisible and on a
+   desktop you had to find it by feel. 34px, always at full ink. */
+.ib{width:34px;height:34px;flex:none;border:none;border-radius:50%;color:var(--fg3);font-size:14px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:box-shadow .12s,color .12s}
+.ib:hover{color:var(--fg0);box-shadow:var(--up-xs)}
+.ib:active{box-shadow:var(--down-sm)}
+.ib.del:hover{color:var(--red)}
+.ib.go:hover{color:var(--green)}
 
 /* ── tables ── */
 /* The heads stick to the top of the page while the rows scroll under them —
@@ -322,51 +354,59 @@ td{padding:9px 8px;border-bottom:1px solid var(--bg1);white-space:nowrap;vertica
 td.wrap{white-space:normal;padding:9px 8px;max-width:none;margin:0;position:static}
 th.r,td.r{text-align:right}
 tr{transition:background-color .12s}
-tr:hover td{background:var(--bg0h)}
+tr:hover td{background:var(--bg1)}
 .num{font-variant-numeric:tabular-nums}
-.mono-in{width:84px;background:var(--bg1);border:1px solid transparent;border-radius:var(--r-sm);
-  padding:3px 7px;text-align:right;color:var(--fg0);transition:background-color .12s,box-shadow .12s}
-.mono-in:focus{background:var(--bg0);box-shadow:0 0 0 2px var(--ring),inset 0 0 0 1px var(--acc);outline:none}
+.mono-in{width:92px;height:34px;background:var(--bg1);border:none;border-radius:var(--r-sm);
+  box-shadow:var(--down-sm);padding:0 10px;text-align:right;color:var(--fg0);transition:box-shadow .12s}
+.mono-in:focus{box-shadow:var(--down-sm),0 0 0 2px var(--acc);outline:none}
 .gain{color:var(--green)} .loss{color:var(--red)}
-.rowacts{opacity:.3;transition:opacity .12s;display:flex;gap:3px;justify-content:flex-end}
-tr:hover .rowacts{opacity:1}
+.rowacts{opacity:1;display:flex;gap:4px;justify-content:flex-end}
 tr.ro td{color:var(--fg3)}
 .auto{font-size:9px;font-family:var(--mono);border:1px solid var(--blue);border-radius:999px;color:var(--blue);padding:1px 7px;margin-left:6px}
 .arch{font-size:9px;font-family:var(--mono);border:1px solid var(--bg3);border-radius:999px;color:var(--fg4);padding:1px 7px;margin-left:6px}
 .inv{font-size:9px;font-family:var(--mono);border:1px solid var(--aqua);border-radius:999px;color:var(--aqua);padding:1px 7px;margin-left:6px}
 
 /* ── forms ── */
-.inp,select.inp{height:36px;padding:0 12px;background:var(--bg1);border:1px solid transparent;
-  border-radius:var(--r);color:var(--fg0);width:100%;outline:none;
-  transition:background-color .15s,box-shadow .15s}
-.inp:focus,select.inp:focus{background:var(--bg0);box-shadow:0 0 0 3px var(--ring),inset 0 0 0 1px var(--acc)}
+/* a field is a well you type into; a button is a thing that sticks out. That
+   contrast is the only affordance this style has, so nothing else in the file
+   is allowed to use --down. */
+.inp,select.inp{height:44px;padding:0 14px;background:var(--bg1);border:none;
+  border-radius:var(--r);box-shadow:var(--down);color:var(--fg0);width:100%;outline:none;
+  transition:box-shadow .15s}
+.inp:focus,select.inp:focus{box-shadow:var(--down),0 0 0 2px var(--acc)}
 .inp::placeholder{color:var(--bg4)}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:10.5px;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--fg4);font-weight:600}
+.field label{font-size:11px;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--fg3);font-weight:600}
 .hint{font-size:.83em;color:var(--fg4);margin-top:6px}
-.btn{height:36px;padding:0 16px;border:1px solid transparent;border-radius:var(--r);
-  background:var(--bg1);color:var(--fg1);font-family:var(--mono);font-weight:500;
-  transition:background-color .15s,color .15s,box-shadow .15s}
-.btn:hover{background:var(--bg2);color:var(--fg0)}
-.btn:active{background:var(--bg2);transform:translateY(.5px)}
-.btn.pri{background:var(--acc);color:var(--on-acc)}
-.btn.pri:hover{background:var(--acc-h);color:var(--on-acc)}
+.btn{height:44px;padding:0 20px;border:none;border-radius:var(--r);
+  background:var(--bg0);color:var(--fg1);font-family:var(--mono);font-weight:500;
+  box-shadow:var(--up-sm);
+  transition:color .15s,box-shadow .15s}
+.btn:hover{color:var(--fg0);box-shadow:var(--up)}
+.btn:active{color:var(--fg0);box-shadow:var(--down-sm)}
+/* the primary action is a filled block, not a same-colour bump. A soft UI that
+   cannot say which button commits the change is the failure this style is
+   famous for. */
+.btn.pri{background:var(--acc);color:var(--on-acc);box-shadow:var(--up-sm)}
+.btn.pri:hover{background:var(--acc-h);color:var(--on-acc);box-shadow:var(--up)}
+.btn.pri:active{box-shadow:var(--down-sm)}
 .btn.pri.danger{background:var(--red);color:#fff}
-.btn.sm{height:30px;padding:0 12px;font-size:11.5px}
-.btn[disabled]{opacity:.4;cursor:not-allowed}
-.btn[disabled]:hover{background:var(--bg1);color:var(--fg1)}
+.btn.sm{height:36px;padding:0 15px;font-size:12.5px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;box-shadow:var(--down-sm)}
+.btn[disabled]:hover{color:var(--fg1);box-shadow:var(--down-sm)}
 .addbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--bg1)}
-.addbar .inp{flex:1 1 110px;width:auto;min-width:0}
+.addbar .inp{flex:1 1 120px;width:auto;min-width:0}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
-.filters .inp{flex:1 1 110px;width:auto;height:32px;min-width:0}
+.filters .inp{flex:1 1 120px;width:auto;height:40px;min-width:0}
 .filters .inp.q{flex:2 1 150px}
 /* segmented control: the selected half is a raised card inside the track,
    which is how a soft UI says "this one" without inverting to full ink */
-.seg2{display:flex;gap:2px;background:var(--bg1);border-radius:var(--r);padding:3px;height:36px;flex:none}
-.seg2 button{padding:0 12px;font-size:11.5px;border-radius:calc(var(--r) - 3px);color:var(--fg3);
-  transition:background-color .15s,color .15s}
+.seg2{display:flex;gap:4px;background:var(--bg1);border-radius:var(--r);box-shadow:var(--down-sm);
+  padding:4px;height:44px;flex:none}
+.seg2 button{padding:0 16px;font-size:12.5px;border-radius:calc(var(--r) - 4px);color:var(--fg3);
+  transition:color .15s,box-shadow .15s}
 .seg2 button:hover{color:var(--fg1)}
-.seg2 button.on{background:var(--bg0);color:var(--fg0);font-weight:600;box-shadow:0 1px 2px rgba(26,24,20,.08)}
+.seg2 button.on{color:var(--fg0);font-weight:600;box-shadow:var(--up-sm)}
 
 /* ── charts ── */
 .chartbox{position:relative;height:230px}
@@ -378,13 +418,13 @@ tr.ro td{color:var(--fg3)}
 .lga{color:var(--fg0);font-weight:600;min-width:88px;text-align:right}
 .chartbox.tall{height:260px}
 .cap{font-size:10.5px;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--fg4);font-weight:600;margin-bottom:11px}
-.empty{color:var(--fg4);font-size:.9em;text-align:center;padding:30px 12px;border:1px solid var(--line);
-  border-radius:var(--r-lg);background:var(--bg0h)}
+.empty{color:var(--fg4);font-size:.9em;text-align:center;padding:30px 12px;border:none;
+  border-radius:var(--r-lg);background:var(--bg1);box-shadow:var(--down-sm)}
 .chart-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--fg4);font-size:13px;text-align:center;padding:20px}
 
 /* ── status line ── */
-.status{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;height:30px;
-  background:var(--bg0);border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;overflow:hidden}
+.status{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;height:46px;
+  background:var(--bg0h);box-shadow:0 -6px 18px var(--nm-dk);font-family:var(--mono);font-size:12px;overflow:hidden}
 .status .seg{display:flex;align-items:center;padding:0 12px;gap:7px;white-space:nowrap}
 .status .mode{font-weight:600;letter-spacing:.14em;color:var(--acc);padding:0 12px}
 .status .mode.ro{color:var(--blue)}
@@ -392,16 +432,16 @@ tr.ro td{color:var(--fg3)}
 .status .seg b{color:var(--fg0);font-weight:600}
 .status .spacer{flex:1}
 .status .keys{color:var(--fg4);gap:12px}
-.status .keys kbd{color:var(--fg2);background:var(--bg1);border-radius:var(--r-sm);padding:1px 5px;font-size:10px}
-.status .addk{color:var(--acc);font-weight:600;transition:background-color .15s}
+.status .keys kbd{color:var(--fg2);background:var(--bg1);box-shadow:var(--up-xs);border-radius:6px;padding:2px 7px;font-size:10.5px}
+.status .addk{color:var(--acc);font-weight:600;transition:box-shadow .15s}
 
 /* ══ quick-add: the express lane. the parse preview sits inside the bar so you
       see what will be saved before you commit it, and a bad parse never opens
       a dialog — it just refuses and says why. ══ */
 .status .qa{padding:0 0 0 8px;gap:8px;min-width:0;flex:0 1 420px}
-.qa-in{background:var(--bg1);border:1px solid transparent;border-radius:999px;height:22px;padding:0 10px;
-  font-size:11.5px;color:var(--fg0);width:190px;min-width:90px;transition:box-shadow .15s}
-.qa-in:focus{outline:none;box-shadow:0 0 0 2px var(--ring),inset 0 0 0 1px var(--acc)}
+.qa-in{background:var(--bg1);border:none;border-radius:999px;height:32px;padding:0 14px;
+  font-size:12px;color:var(--fg0);width:200px;min-width:90px;box-shadow:var(--down-sm);transition:box-shadow .15s}
+.qa-in:focus{outline:none;box-shadow:var(--down-sm),0 0 0 2px var(--acc)}
 .qa-hint{font-size:10.5px;color:var(--fg4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .qa-hint.ok{color:var(--green)} .qa-hint.err{color:var(--orange)}
 /* the fastest way to log an expense is also the first thing a narrow screen
@@ -438,11 +478,11 @@ tr.ro td{color:var(--fg3)}
 .minirow .a{font-weight:600}
 .minirow .a.pos{color:var(--green)} .minirow .a.neg{color:var(--red)}
 .gain.pos{color:var(--green)} .gain.neg{color:var(--red)} .gain.none{color:var(--fg4)}
-.status .addk:hover{background:var(--bg1);color:var(--acc-h)}
+.status .addk:hover{color:var(--acc-h);box-shadow:var(--up-xs)}
 @media(max-width:820px){.status .keys{display:none}}
 
 /* ── modal ── */
-.ov{position:fixed;inset:0;z-index:90;background:rgba(26,24,20,.42);display:none;align-items:center;justify-content:center;padding:16px}
+.ov{position:fixed;inset:0;z-index:90;background:rgba(26,24,20,.50);display:none;align-items:center;justify-content:center;padding:16px}
 [data-theme="dark"] .ov{background:rgba(0,0,0,.6)}
 .ov.open{display:flex;animation:pageIn .16s ease-out both}
 .modal{width:100%;max-width:470px;background:var(--bg0);border:1px solid var(--line);border-radius:var(--r-lg);
@@ -450,42 +490,43 @@ tr.ro td{color:var(--fg3)}
 .modal.wide{max-width:560px}
 .modal .mh{display:flex;align-items:center;padding:13px 16px;background:var(--bg0);border-bottom:1px solid var(--bg1)}
 .modal .mh h3{margin:0;font-size:11px;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);font-weight:600}
-.modal .mh .x{margin-left:auto;color:var(--fg4);width:28px;height:28px;border-radius:50%;
-  transition:background-color .12s,color .12s}
-.modal .mh .x:hover{background:var(--bg1);color:var(--red)}
+.modal .mh .x{margin-left:auto;color:var(--fg3);width:34px;height:34px;border-radius:50%;
+  transition:box-shadow .12s,color .12s}
+.modal .mh .x:hover{color:var(--red);box-shadow:var(--up-xs)}
+.modal .mh .x:active{box-shadow:var(--down-sm)}
 .mb{padding:20px 16px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .full{grid-column:1/-1}
-.chk{display:flex;align-items:center;gap:8px;font-size:.93em;cursor:pointer;user-select:none}
-.chk input{accent-color:var(--acc);width:16px;height:16px}
-.opts{border:1px solid var(--line);border-radius:var(--r);background:var(--bg0h);padding:13px;margin-top:2px}
+.chk{display:flex;align-items:center;gap:10px;font-size:.95em;cursor:pointer;user-select:none;min-height:34px}
+.chk input{accent-color:var(--acc);width:20px;height:20px;flex:none}
+.opts{border:none;border-radius:var(--r);background:var(--bg1);box-shadow:var(--down-sm);padding:15px;margin-top:2px}
 .mf{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--bg1)}
 .mf .btn{flex:1}
 .swatches{display:flex;gap:7px;flex-wrap:wrap}
-.sw{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);transition:transform .12s,box-shadow .12s}
-.sw:hover{transform:scale(1.08)}
-.sw.on{border-color:transparent;box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--acc)}
-.syncstat{margin-top:16px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);
-  background:var(--bg0h);font-size:.86em;line-height:1.75;color:var(--fg2);white-space:pre-line}
+.sw{width:32px;height:32px;border-radius:50%;border:none;box-shadow:var(--up-xs);transition:transform .12s,box-shadow .12s}
+.sw:hover{transform:scale(1.1)}
+.sw.on{transform:scale(1.1);box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--acc)}
+.syncstat{margin-top:16px;padding:14px 16px;border:none;border-radius:var(--r);
+  background:var(--bg1);box-shadow:var(--down-sm);font-size:.86em;line-height:1.75;color:var(--fg2);white-space:pre-line}
 .syncstat b{color:var(--fg0);font-weight:600}
-.syncerr{margin-top:10px;padding:12px 14px;border:1px solid var(--red);border-radius:var(--r);
-  background:var(--bg0h);font-size:.86em;line-height:1.7;color:var(--red)}
+.syncerr{margin-top:10px;padding:14px 16px;border:1px solid var(--red);border-radius:var(--r);
+  background:var(--bg1);box-shadow:var(--down-sm);font-size:.86em;line-height:1.7;color:var(--red)}
 .syncerr b{display:block;margin-bottom:4px}
 .warnline{color:var(--orange)!important}
-code{font-size:.92em;background:var(--bg1);border-radius:3px;padding:0 4px}
+code{font-size:.92em;background:var(--bg1);box-shadow:var(--down-sm);border-radius:5px;padding:1px 6px}
 .keytbl{width:100%;font-size:.93em}
 .keytbl td{border-bottom:1px solid var(--bg1);padding:7px 4px}
-.keytbl kbd{background:var(--bg1);border-radius:var(--r-sm);color:var(--fg0);padding:2px 7px;font-size:11px}
+.keytbl kbd{background:var(--bg1);box-shadow:var(--up-xs);border-radius:7px;color:var(--fg0);padding:4px 9px;font-size:11.5px}
 
-.toast{position:fixed;bottom:44px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--bg0);
+.toast{position:fixed;bottom:56px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--bg0);
   border:1px solid var(--line);border-radius:999px;box-shadow:var(--soft);color:var(--fg0);
   padding:11px 18px;font-size:13.5px;z-index:100;
   opacity:0;pointer-events:none;transition:opacity .2s,transform .24s cubic-bezier(.25,.6,.3,1);
   display:flex;align-items:center;gap:12px;max-width:92vw}
 .toast.show{opacity:1;transform:translateX(-50%);pointer-events:auto}
 .toast.err{border-color:var(--red);color:var(--red)}
-.toast .ua{background:var(--acc);color:var(--on-acc);padding:3px 11px;border-radius:999px;
-  font-family:var(--mono);font-size:11px;flex:none;transition:background-color .15s}
+.toast .ua{background:var(--acc);color:var(--on-acc);padding:6px 14px;border-radius:999px;
+  font-family:var(--mono);font-size:12px;flex:none;transition:background-color .15s}
 .toast .ua:hover{background:var(--acc-h)}
 .hide{display:none!important}
 
@@ -507,6 +548,30 @@ code{font-size:.92em;background:var(--bg1);border-radius:3px;padding:0 4px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}
   #eink{display:none}}
 
+/* ══ quick entry — the overview's own log form ══════════════════════
+   Logging a transaction used to mean a keyboard shortcut, a 30px-tall bar
+   pinned to the bottom of the window, or a dialog reached from a button in
+   that same bar. It is the thing this app is opened to do, so it is now the
+   first thing on the first page. ══════════════════════════════ */
+.entry{display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr 1.6fr auto;gap:14px;align-items:end}
+.entry .field{min-width:0}
+#entryPanel .seg2{margin-bottom:18px;width:max-content}
+#eSave{height:44px;padding:0 26px;white-space:nowrap}
+/* one row of chips covers the only back-dating anyone does by hand; the date
+   field beside them covers every other day without a second control */
+.daychips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.daychips .lbl{font-size:11px;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--fg3);font-weight:600;margin-right:2px}
+.chip{height:34px;padding:0 15px;border:none;border-radius:999px;background:var(--bg0);
+  color:var(--fg2);font-family:var(--mono);font-size:12px;box-shadow:var(--up-xs);
+  transition:color .15s,box-shadow .15s}
+.chip:hover{color:var(--fg0);box-shadow:var(--up-sm)}
+.chip.on{color:var(--acc);font-weight:600;box-shadow:var(--down-sm)}
+#eWarn{margin-top:14px;min-height:1px}
+#eWarn:empty{display:none}
+@media(max-width:940px){.entry{grid-template-columns:1fr 1fr}#eSave{grid-column:1/-1}}
+@media(max-width:560px){.entry{grid-template-columns:1fr}}
+
 /* ══ print ═══════════════════════════════════════════════════════════════
    What is on screen is what prints — the open section, on paper, in the paper
    palette whatever the screen theme is. The status line stops being fixed and
@@ -518,7 +583,8 @@ code{font-size:.92em;background:var(--bg1);border-radius:3px;padding:0 4px}
   :root,[data-theme="dark"]{
     --bg0h:#fff; --bg0:#fff; --bg1:#fff; --bg2:#ddd; --line:#c8c8c8;
     --fg0:#000; --fg1:#1a1a1a; --fg2:#333; --fg3:#4a4a4a; --fg4:#5c5c5c;
-    --grain:none; --soft:none; --ctl:#fff;
+    --soft:none; --ctl:#fff;
+    --up:none; --up-sm:none; --up-xs:none; --down:none; --down-sm:none; --float:none;
   }
   body{background:#fff!important;color:#000;padding:0;font-size:10.5pt}
   .hdr-actions,.tabline,.menu,#eink,.toast,.ov,.rowacts,.acts,.ib,.btn,
@@ -594,6 +660,26 @@ code{font-size:.92em;background:var(--bg1);border-radius:3px;padding:0 4px}
 
 <!-- ══════════ OVERVIEW ══════════ -->
 <section class="view" id="view-dash">
+
+  <div class="panel" id="entryPanel">
+    <h2 class="ptitle">┤ <b>log a transaction</b> ├</h2>
+    <div class="seg2" id="entryKind" role="group" aria-label="What kind of transaction">
+      <button type="button" class="on" data-kind="expense">money out</button>
+      <button type="button" data-kind="income">money in</button>
+    </div>
+    <div class="entry">
+      <div class="field"><label for="eAmt">amount</label>
+        <input class="inp num" id="eAmt" type="number" step="any" min="0" placeholder="0" inputmode="decimal"></div>
+      <div class="field" id="eCatField"><label for="eCat">category</label><select class="inp" id="eCat"></select></div>
+      <div class="field hide" id="eSrcField"><label for="eSrc">source</label><select class="inp" id="eSrc"></select></div>
+      <div class="field"><label for="eDate">date</label><input class="inp" id="eDate" type="date"></div>
+      <div class="field"><label for="eNote">note</label><input class="inp" id="eNote" placeholder="optional"></div>
+      <button class="btn pri" id="eSave">log it</button>
+    </div>
+    <div class="daychips" id="eDayChips"><span class="lbl">when</span></div>
+    <p class="hint" id="eWarn"></p>
+  </div>
+
   <div class="stats">
     <div class="st acc"><div class="l">income</div><div class="v num" id="sIncome">—</div><div class="s" id="sIncomeSub">0 sources</div></div>
     <div class="st"><div class="l">spent</div><div class="v num" id="sSpent">—</div><div class="s" id="sSpentSub">this month</div></div>
@@ -1378,7 +1464,7 @@ $('tabline').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)
 
 /* ═══ render ═══ */
 function renderAll(){ensureColors();renderBanners();renderMonths();renderStats();renderGauge();renderBills();renderCats();
-  renderIncome();renderGoals();renderRec();renderCatSelects();renderFilterCats();renderExpenses();
+  renderIncome();renderGoals();renderRec();renderCatSelects();renderEntry();renderFilterCats();renderExpenses();
   renderInvest();renderHistory();renderInsights();renderStatus();renderCharts();renderQuickPreview()}
 
 let rollDismissed=false;
@@ -1390,7 +1476,7 @@ function renderBanners(){
   $('rollBanner').classList.toggle('hide',!behind);
   if(behind){$('rollNow').textContent=monthLabel(monthStr());$('rollOpen').textContent=monthLabel(state.currentMonth)}
   /* live-only panels make no sense while browsing an archive */
-  ['billsPanel','goalPanel'].forEach(id=>$(id).classList.toggle('hide',!!a));
+  ['entryPanel','billsPanel','goalPanel'].forEach(id=>$(id).classList.toggle('hide',!!a));
   ['catAddBar','srcAddBar','addRecBtn'].forEach(id=>$(id).classList.toggle('hide',!!a));
   $('monthWrap').classList.toggle('past',!!a);
 }
@@ -2331,6 +2417,107 @@ $('mkSave').onclick=()=>{const h=state.holdings.find(x=>x.id===markHold);if(!h)r
   const g=v-putIn(h.id);
   toast(`${h.name} marked at ${fmt(v)} · ${g>=0?'+':''}${fmtK(g)} on what you put in`,'',true)};
 
+/* ═══════════ OVERVIEW ENTRY PANEL ═══════════
+   One form on the first page that logs either direction. It writes to exactly
+   the same two arrays the dialogs do — state.expenses and state.income — so
+   nothing downstream has to know an entry came from here.
+
+   Back-dating is the reason it exists and it is also the one way it can lose
+   you money, so it is spelled out rather than guarded:
+
+   · a date inside the open month just works — it lands in this month's totals.
+   · a date in an ALREADY-CLOSED month is saved to the live log, but that
+     month's archive is a frozen copy taken at close and is not rewritten, and
+     totalSpent()/receivedIncome() only ever look at the open month. So the
+     entry is real, it shows in the expense log on "all time", and no month's
+     figures will ever include it.
+   · a date in a FUTURE month is saved and starts counting the day that month
+     becomes the open one.
+
+   All three are allowed. The third line of the panel says which one you are
+   about to do, before you press the button — an entry that quietly does not
+   count is the worst thing a ledger can do to you. */
+let entryKind='expense';
+function shiftDay(n){const d=new Date();d.setDate(d.getDate()-n);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+const DAY_CHIPS=[[0,'today'],[1,'yesterday'],[2,'2 days ago'],[3,'3 days ago'],[7,'a week ago']];
+
+function renderEntry(){
+  if(viewing())return;                      /* panel is hidden; nothing to fill */
+  const exp=entryKind==='expense';
+  document.querySelectorAll('#entryKind button').forEach(b=>b.classList.toggle('on',b.dataset.kind===entryKind));
+  $('eCatField').classList.toggle('hide',!exp);
+  $('eSrcField').classList.toggle('hide',exp);
+
+  const cs=$('eCat'),cv=cs.value;
+  cs.innerHTML=state.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')
+    ||'<option value="">no categories yet — add one on the budget tab</option>';
+  if(cv)cs.value=cv;
+
+  /* an unlabelled receipt is always offered: refusing to record money that
+     arrived because you have not named its source first is the friction this
+     panel exists to remove. receivedIncome() counts it either way. */
+  const ss=$('eSrc'),sv=ss.value;
+  ss.innerHTML=state.incomeSources.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')
+    +'<option value="">— unlabelled —</option>';
+  ss.value=sv;
+
+  if(!isYMD($('eDate').value))$('eDate').value=todayStr();
+  $('eSave').textContent=exp?'log expense':'log income';
+
+  const cur=$('eDate').value;
+  $('eDayChips').innerHTML='<span class="lbl">when</span>'+DAY_CHIPS.map(([n,l])=>{
+    const d=shiftDay(n);
+    return `<button type="button" class="chip ${d===cur?'on':''}" data-day="${n}">${l}</button>`}).join('');
+  renderEntryWarn()}
+
+function renderEntryWarn(){
+  const w=$('eWarn'),d=$('eDate').value;
+  if(!isYMD(d)){w.textContent='';return}
+  const m=d.slice(0,7),open=state.currentMonth,noun=entryKind==='expense'?'expense':'receipt';
+  if(m===open){
+    w.className='hint';
+    w.textContent=d===todayStr()?'':`back-dated to ${d} — still inside ${monthLabel(open)}, so it counts in this month's totals.`;
+    return}
+  w.className='hint stale';
+  w.textContent=archiveOf(m)
+    ? `${monthLabel(m)} is closed. this ${noun} will be saved and will show in the expense log on "all time", but the archived figures for ${monthLabel(m)} were frozen when you closed it and will not change.`
+    : `${monthLabel(m)} is not the open month (${monthLabel(open)}). this ${noun} will be saved, but no month's totals will include it until ${monthLabel(m)} is the open one.`}
+
+$('entryKind').addEventListener('click',e=>{const b=e.target.closest('[data-kind]');if(!b)return;
+  entryKind=b.dataset.kind;renderEntry();$('eAmt').focus()});
+$('eDayChips').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;
+  $('eDate').value=shiftDay(+b.dataset.day);renderEntry()});
+$('eDate').addEventListener('change',renderEntry);
+/* enter anywhere in the form commits it — the whole point is not reaching for
+   the mouse to log a ₹40 auto fare */
+['eAmt','eNote'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('eSave').click()}}));
+
+$('eSave').onclick=()=>{
+  if(guardRO())return;
+  const a=+$('eAmt').value,d=$('eDate').value,note=$('eNote').value.trim();let msg;
+  if(!(a>0))return toast('amount must be greater than 0','err');
+  if(!isYMD(d))return toast('pick a date','err');
+
+  if(entryKind==='expense'){
+    const cat=$('eCat').value;
+    if(!cat){setTab('budget');return toast('add a category first','err')}
+    snap('log expense');
+    state.expenses.push({id:uid(),categoryId:cat,amount:a,date:d,note,_t:Date.now()});
+    lastCatUsed=cat;
+    const c=state.categories.find(x=>x.id===cat);
+    msg=`${fmt(a)} out to ${c?c.name:'category'}`;
+  }else{
+    const sid=$('eSrc').value;
+    snap('log income');
+    state.income.push({id:uid(),sourceId:state.incomeSources.some(x=>x.id===sid)?sid:'',date:d,amount:a,note});
+    const src=state.incomeSources.find(x=>x.id===sid);
+    msg=`${fmt(a)} in${src?' from '+src.name:''}`;
+  }
+  $('eAmt').value='';$('eNote').value='';
+  save();renderAll();$('eAmt').focus();
+  toast(d===todayStr()?msg:`${msg} · dated ${d}`,'',true)};
+
 /* ═══ income receipts ═══ */
 $('addRecvBtn').onclick=()=>{if(guardRO())return;
   if(!state.incomeSources.length)return toast('add an income source first','err');
@@ -2703,7 +2890,7 @@ function resolvedTheme(){
 function applyTheme(){const t=resolvedTheme();
   document.documentElement.setAttribute('data-theme',t);
   $('themeBtn').textContent=t==='dark'?'◐ dark':'◑ light';
-  $('themeColor').setAttribute('content',t==='dark'?'#141311':'#f1eee6')}
+  $('themeColor').setAttribute('content',t==='dark'?'#232120':'#e9e5dd')}
 $('themeBtn').onclick=()=>{state.theme=resolvedTheme()==='dark'?'light':'dark';applyTheme();save();renderGauge();renderCharts()};
 
 /* ═══ reading size ═══

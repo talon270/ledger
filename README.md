@@ -34,7 +34,7 @@ CDN is gone.
 
 | Section | What it does |
 |---|---|
-| **overview** | Savings rate, safe-to-spend per day, net cash flow, and a plain-language read of what your own log says this month |
+| **overview** | Log a transaction — money out or money in, any day — then savings rate, safe-to-spend per day, net cash flow, and a plain-language read of what your own log says this month |
 | **budget** | Categories as a fixed amount or a share of income, each with an alert threshold, planned-vs-actual bars and an allocation donut |
 | **expenses** | The log itself — filter by category, note or date range, sort any column, subtotal at the bottom |
 | **investments** | A contribution ledger: what you put in, optional manual marks for what it is worth now, split by asset and by class |
@@ -57,6 +57,17 @@ the app never blends them: `incomeSources` is what you *expect* each month,
 once any exist and the plan until then — and every surface that prints it also
 prints which one it used. When it is running on the plan, the number carries a
 `projected` tag.
+
+**Back-dating tells you, before you press the button, which of three things
+it is about to do.** Logging yesterday's auto fare is the single most common
+entry and it used to mean a dialog; it is now the first panel on the first page,
+with `today` / `yesterday` / `2 days` / `3 days` / `a week` beside a date field
+for anything older. But a date is not just a date: inside the open month it
+counts normally, into an **already-closed** month it saves and shows under "all
+time" while that archive stays frozen as it was at close, and into a future
+month it starts counting when that month opens. All three are allowed — the
+panel just says which one you are choosing. An entry that quietly does not count
+is the worst thing a ledger can do to you.
 
 **Decimals are printed only when there are decimals.** `₹86,840` rather than
 `₹86,840.00`. Two dead characters on every figure, in the largest type on the
@@ -81,7 +92,13 @@ every destructive action leaves an undo on the toast.
 
 **Both themes are equal citizens.** Paper and night are the same design, not a
 filter — every colour pair in both clears WCAG AA, including the muted labels
-(4.5:1 and up, measured, not eyeballed).
+(4.5:1 and up, measured, not eyeballed). The surface is soft-relief: page and
+card are the *same* colour and are told apart by light, so the whole affordance
+grammar is one rule — **a field is pressed in, a control sticks out.** Where
+that style usually fails is legibility, so it is not allowed to carry meaning
+alone here: body ink sits at 14:1, the primary action stays a filled block
+rather than a same-colour bump, and focus is a real outline. A control whose
+only signal is a 6px shadow is unusable in sunlight.
 
 **Sync replaces, and says so, rather than pretending to merge.** One row holds
 the whole ledger, so a push overwrites the server and a pull overwrites this
