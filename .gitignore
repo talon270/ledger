@@ -1,0 +1,4 @@
+# the working copy and its timestamped backups stay out of the published repo
+ledger.html
+ledger.backup-*.html
+.DS_Store
