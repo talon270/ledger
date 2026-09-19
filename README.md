@@ -24,9 +24,11 @@ git clone git@github.com:talon270/ledger.git
 open ledger/index.html
 ```
 
-Chart.js 4.4.1 (MIT) is vendored inline rather than pulled from a CDN, so the
-page renders its charts on a plane, behind a firewall, or in ten years when the
-CDN is gone.
+Chart.js 4.4.1 (MIT) is vendored inline rather than pulled from a CDN, and the
+typeface is embedded the same way — a 15KB woff2 subset of JetBrains Mono Nerd
+Font in three weights, no `@import` and no font host. The page renders its
+charts and its letterforms on a plane, behind a firewall, or in ten years when
+the CDN is gone.
 
 ---
 
@@ -90,6 +92,18 @@ styled, and freeze headless browsers so nothing destructive can ever be tested.
 Every confirmation is an in-page dialog whose keyboard default is *cancel*, and
 every destructive action leaves an undo on the toast.
 
+**One typeface, embedded, and it is honest about the twelve glyphs it does not
+have.** The whole page is JetBrains Mono Nerd Font — headings, prose and figures,
+not just the numbers. An installed copy is used when there is one, with a subset
+embedded behind it so a machine without it gets the same letterforms rather than
+a substitute. But the Nerd Font carries 12,608 glyphs and `₹` is not one of
+them, nor are `▤ ▩ ▬ ◐ ◑ ☁ ⚙ ✎ ✦ ⟳ ⧉` — checked against the font file, not
+assumed. Those twelve fall through to a named fallback, which is why the stack
+names real fonts instead of ending at `monospace`: an unnamed fallback resolves
+to a different face on every machine. The rupee is the one you will notice,
+since it prefixes every figure. If the mismatch bothers you, set the currency
+symbol to `Rs` in settings — that renders entirely in the page font.
+
 **Three palettes and two modes, and all six are equal citizens.** Graphite
 (indigo), slate (steel blue) and sage (deep teal), each in day and night —
 switch in `data ▸ settings`, applied live as you pick it, reverted if you
@@ -135,12 +149,21 @@ printed sheet that does not say which month it covers is worth nothing.
 | Where it lives | `localStorage`, under one key, in the browser you typed it into |
 | What leaves the browser | Nothing, unless you configure cloud sync. With it unconfigured the page makes zero network requests — checked by recording every request the page issues, not assumed |
 | Sync credentials | A separate storage key, never inside the ledger — so an exported backup carries no token |
-| Analytics / telemetry | None. There is no third-party request of any kind |
+| Analytics / telemetry | None. There is no third-party request of any kind — verified by failing the test run if the page issues one |
 | Getting it out | JSON backup (round-trips exactly), CSV of expenses, CSV of contributions |
 | Schema changes | Versioned, migrated on load, and announced in a toast — never silently |
 
 Clearing site data for this origin erases the ledger. Export a backup before you
 do that, and before any browser "clear cookies and site data" sweep.
+
+---
+
+## Credits
+
+| | |
+|---|---|
+| Charts | [Chart.js](https://www.chartjs.org) 4.4.1, MIT — vendored inline |
+| Typeface | [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) © 2020 The JetBrains Mono Project Authors, [SIL Open Font License 1.1](https://openfontlicense.org). Patched glyphs from [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) © Ryan L McIntyre, MIT. Embedded as a subset of 135 codepoints, three weights |
 
 ---
 
