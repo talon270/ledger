@@ -465,6 +465,14 @@ tr.ro td{color:var(--fg3)}
 .sw{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);transition:transform .12s,box-shadow .12s}
 .sw:hover{transform:scale(1.08)}
 .sw.on{border-color:transparent;box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--acc)}
+.syncstat{margin-top:16px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--bg0h);font-size:.86em;line-height:1.75;color:var(--fg2);white-space:pre-line}
+.syncstat b{color:var(--fg0);font-weight:600}
+.syncerr{margin-top:10px;padding:12px 14px;border:1px solid var(--red);border-radius:var(--r);
+  background:var(--bg0h);font-size:.86em;line-height:1.7;color:var(--red)}
+.syncerr b{display:block;margin-bottom:4px}
+.warnline{color:var(--orange)!important}
+code{font-size:.92em;background:var(--bg1);border-radius:3px;padding:0 4px}
 .keytbl{width:100%;font-size:.93em}
 .keytbl td{border-bottom:1px solid var(--bg1);padding:7px 4px}
 .keytbl kbd{background:var(--bg1);border-radius:var(--r-sm);color:var(--fg0);padding:2px 7px;font-size:11px}
@@ -552,6 +560,7 @@ tr.ro td{color:var(--fg3)}
         <button role="menuitem" data-act="export-inv">↓ export contributions (.csv)</button>
         <button role="menuitem" data-act="import">↑ import .json / .csv</button>
         <div class="sep"></div>
+        <button role="menuitem" data-act="sync">☁ cloud sync <span class="k" id="syncK">off</span></button>
         <button role="menuitem" data-act="settings">⚙ settings</button>
         <button role="menuitem" data-act="seed">✦ load sample data</button>
         <button role="menuitem" data-act="reset-month">⟳ close month &amp; archive</button>
@@ -948,6 +957,42 @@ tr.ro td{color:var(--fg3)}
   <div class="mf"><button class="btn" data-close>cancel</button><button class="btn pri" id="setSave">save</button></div>
 </div></div>
 
+<div class="ov" id="ovSync"><div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+  <div class="mh"><h3 id="syncTitle">cloud sync — turso</h3><button class="x" data-close aria-label="Close dialog">✕</button></div>
+  <div class="mb">
+    <p class="hint" style="margin:0 0 14px">off until you fill this in. the ledger keeps working exactly as it does now —
+      one browser, one storage key, no network call of any kind — and nothing here ever runs on its own unless you tick auto-push below.</p>
+
+    <div class="field full"><label for="syncUrl">database url</label>
+      <input class="inp" id="syncUrl" placeholder="libsql://ledger-you.turso.io" autocomplete="off" spellcheck="false">
+      <p class="hint">paste it as turso gives it to you. <code>libsql://</code> is converted to <code>https://…/v2/pipeline</code> for you.</p></div>
+
+    <div class="field full" style="margin-top:12px"><label for="syncTok">auth token</label>
+      <input class="inp" id="syncTok" type="password" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
+      <p class="hint warnline">this token is stored in this browser in plain text and anything with access to this browser
+        can read it. use a token scoped to this one database, and rotate it if the machine is shared.</p></div>
+
+    <div class="field full" style="margin-top:12px"><label for="syncDev">device label</label>
+      <input class="inp" id="syncDev" placeholder="laptop" maxlength="24" autocomplete="off">
+      <p class="hint">printed next to the copy on the server so you can tell which machine wrote it last.</p></div>
+
+    <div class="opts" style="margin-top:14px">
+      <label class="chk"><input type="checkbox" id="syncAuto"> push automatically, 4 seconds after a change</label>
+      <p class="hint" style="margin-top:7px">suggested because you log expenses in short bursts and a manual push is easy to forget.
+        the local save always happens first and never waits for the network — if the push fails you keep everything and the status below says so.
+        leave it unticked to sync only when you press the button.</p>
+    </div>
+
+    <div class="syncstat" id="syncStat">not configured</div>
+    <div class="syncerr hide" id="syncErr"></div>
+  </div>
+  <div class="mf">
+    <button class="btn" id="syncTest">test &amp; create table</button>
+    <button class="btn" id="syncPull">pull ↓</button>
+    <button class="btn pri" id="syncPush">push ↑</button>
+  </div>
+</div></div>
+
 <div class="ov" id="ovAsk"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="askTitle">
   <div class="mh"><h3 id="askTitle">are you sure?</h3><button class="x" data-close aria-label="Close dialog">✕</button></div>
   <div class="mb"><p id="askBody" style="margin:0;line-height:1.65;white-space:pre-line"></p></div>
@@ -1188,7 +1233,8 @@ let state=(()=>{
   const d=defaults();
   try{if(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)d.theme='light'}catch(e){}
   return d})();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('storage full — export a backup','err')}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('storage full — export a backup','err')}
+  scheduleAutoPush()}   /* local write first, always. the network never delays it */
 
 /* ── undo ── */
 let undoStack=[];
@@ -2476,6 +2522,180 @@ function stepMonth(dir){const opts=[...$('monthSelect').options].map(o=>o.value)
   if(j<0||j>=opts.length)return toast(dir<0?'no newer month':'no older month');
   goMonth(opts[j])}
 
+/* ═══════════════════ cloud sync — turso over plain HTTP ═══════════════════
+   Turso speaks the libSQL HTTP protocol at POST /v2/pipeline, which is JSON in
+   and JSON out, so this is fetch() and nothing else — no client library, no
+   bundler, no CDN. The ledger keeps working with none of this configured: no
+   request of any kind is made until a url and a token exist.
+
+   Three rules this module does not break:
+   · The local save always happens first and never waits for the network. A
+     failed sync costs you nothing but the sync.
+   · Nothing overwrites anything without showing both sides first. A pull
+     prints what each copy holds before it replaces yours, takes an undo
+     snapshot, and refuses outright if the row on the server does not parse as
+     a ledger. A push that would clobber a newer server copy asks.
+   · The credentials live under their own storage key, never inside `state` —
+     otherwise the first JSON backup you shared would carry your token in it.
+
+   UNVERIFIED, and the one thing that can sink this: whether Turso returns CORS
+   headers permitting a browser on another origin to call it. Turso documents
+   the HTTP API for servers and edge runtimes, where CORS does not apply, and
+   says nothing either way about browsers. If it does not allow it, `fetch`
+   rejects with no status at all — which is what `blocked` below detects, and
+   SETUP-turso.md carries the 12-line Cloudflare Worker that fixes it. ═══ */
+const SKEY='ledger.sync.v1';
+function syncCfg(){try{const r=JSON.parse(localStorage.getItem(SKEY)||'{}');return r&&typeof r==='object'&&!Array.isArray(r)?r:{}}catch(e){return{}}}
+function syncSave(c){try{localStorage.setItem(SKEY,JSON.stringify(c))}catch(e){}}
+function syncOn(){const c=syncCfg();return !!(c.url&&c.token)}
+
+/* libsql://db-org.turso.io → https://db-org.turso.io/v2/pipeline. Idempotent,
+   so pasting the https form or the full endpoint works just as well. */
+function syncEndpoint(raw){let u=String(raw||'').trim();
+  if(!u)return '';
+  u=u.replace(/^libsql:\/\//i,'https://').replace(/^wss:\/\//i,'https://').replace(/\/+$/,'');
+  if(!/^https?:\/\//i.test(u))u='https://'+u;
+  if(!/\/v2\/pipeline$/i.test(u))u+='/v2/pipeline';
+  return u}
+const tsNow=()=>new Date().toISOString();
+function tsShort(iso){if(!iso)return '—';const d=new Date(iso);if(isNaN(d))return '—';
+  return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+
+async function tursoExec(sql,args){
+  const c=syncCfg();
+  if(!c.url||!c.token){const e=new Error('no database url or token saved yet');throw e}
+  let res;
+  try{
+    res=await fetch(syncEndpoint(c.url),{method:'POST',
+      headers:{'Authorization':'Bearer '+c.token,'Content-Type':'application/json'},
+      body:JSON.stringify({requests:[
+        {type:'execute',stmt:{sql,args:(args||[]).map(v=>v==null?{type:'null'}:{type:'text',value:String(v)})}},
+        {type:'close'}]})})}
+  catch(e){const err=new Error('blocked');err.blocked=true;throw err}
+  if(!res.ok){const body=(await res.text().catch(()=>'')).slice(0,240);
+    const e=new Error('the database answered HTTP '+res.status+(body?' — '+body:''));e.status=res.status;throw e}
+  const j=await res.json().catch(()=>null);
+  const r=j&&j.results&&j.results[0];
+  if(!r)throw new Error('the database sent no result for that statement');
+  if(r.type==='error')throw new Error((r.error&&r.error.message)||'the database rejected the statement');
+  const out=(r.response&&r.response.result)||{};
+  return{cols:(out.cols||[]).map(x=>x&&x.name),
+         rows:(out.rows||[]).map(row=>row.map(cell=>cell&&cell.type!=='null'?cell.value:null))}}
+
+function syncExplain(e){
+  if(e&&e.blocked)return 'the browser stopped the request before any reply came back.\n'+
+    'if you are online and the url is right, this is CORS: the database has to allow calls from '+location.origin+
+    '. SETUP-turso.md has the worker that fixes it.';
+  if(e&&e.status===401)return 'the token was refused (HTTP 401). generate a fresh one for this database.';
+  if(e&&e.status===404)return 'nothing answered at that url (HTTP 404). check the database name.';
+  return (e&&e.message)||'unknown error'}
+
+const SYNC_DDL="CREATE TABLE IF NOT EXISTS ledger_state(id TEXT PRIMARY KEY,data TEXT NOT NULL,updated_at TEXT NOT NULL,device TEXT)";
+async function remoteMeta(){
+  const r=await tursoExec("SELECT updated_at,device,length(data) FROM ledger_state WHERE id='main'");
+  if(!r.rows.length)return null;
+  const row=r.rows[0];return{updated:row[0],device:row[1]||'unnamed device',bytes:+row[2]||0}}
+
+function syncCounts(st){return[['expenses',st.expenses.length],['receipts',st.income.length],
+  ['categories',st.categories.length],['goals',st.goals.length],['holdings',st.holdings.length],
+  ['contributions',st.contributions.length],['closed months',st.archives.length]]}
+
+/* push. `auto` never opens a dialog: if the server moved on, it refuses and
+   says so rather than ambushing you with a modal four seconds after a keystroke. */
+async function syncPush(auto){
+  const c=syncCfg(),meta=await remoteMeta();
+  if(meta&&c.lastSeen&&meta.updated>c.lastSeen){
+    if(auto)throw new Error('the copy on the server changed on '+meta.device+' at '+tsShort(meta.updated)+
+      ' — pull it, or press push to overwrite it deliberately');
+    const ok=await ask('overwrite a newer copy on the server?',
+      'the server copy was written by '+meta.device+' at '+tsShort(meta.updated)+
+      ', after your last sync at '+tsShort(c.lastSeen)+'.\n\npushing replaces it with this browser\'s ledger. pulling first would replace this browser\'s instead.',
+      'overwrite the server',true);
+    if(!ok)return false}
+  const now=tsNow(),json=JSON.stringify(state);
+  await tursoExec("INSERT INTO ledger_state(id,data,updated_at,device) VALUES('main',?,?,?) "+
+    "ON CONFLICT(id) DO UPDATE SET data=excluded.data,updated_at=excluded.updated_at,device=excluded.device",
+    [json,now,c.device||'this browser']);
+  const c2=syncCfg();c2.lastPush=now;c2.lastSeen=now;c2.bytes=json.length;c2.lastError='';syncSave(c2);
+  return true}
+
+async function syncPull(){
+  const r=await tursoExec("SELECT data,updated_at,device FROM ledger_state WHERE id='main'");
+  if(!r.rows.length){toast('nothing on the server yet — push first');return false}
+  const data=r.rows[0][0],updated=r.rows[0][1],device=r.rows[0][2]||'the server';
+  let inc;
+  try{inc=normalize(JSON.parse(data))}
+  catch(e){throw new Error('the row on the server is not a ledger backup, so nothing here was touched')}
+  const mine=syncCounts(state),theirs=syncCounts(inc.state);
+  const table=mine.map((x,i)=>'  '+x[0].padEnd(15)+String(x[1]).padStart(5)+'   →'+String(theirs[i][1]).padStart(5)).join('\n');
+  const ok=await ask('replace this browser\'s ledger with the server copy?',
+    'written by '+device+' at '+tsShort(updated)+'.\n\n  '+'here'.padStart(20)+'  server\n'+table+
+    (inc.dropped?'\n\n'+inc.dropped+' unreadable entries in the server copy would be dropped.':'')+
+    '\n\nundo brings this browser\'s copy back.','pull and replace',false);
+  if(!ok)return false;
+  snap('cloud pull');
+  state=inc.state;viewMonth=null;state.currency=cleanCur(state.currency);
+  save();applyTheme();applyTextSize();materialize();renderAll();
+  const c=syncCfg();c.lastPull=tsNow();c.lastSeen=updated;c.lastError='';syncSave(c);
+  toast('pulled from '+device,'',true);
+  return true}
+
+let autoTimer=null;
+function scheduleAutoPush(){const c=syncCfg();
+  if(!c.auto||!syncOn())return;
+  clearTimeout(autoTimer);
+  autoTimer=setTimeout(()=>{syncPush(true).then(ok=>{if(ok)renderSyncStat()}).catch(e=>{
+    const c2=syncCfg();c2.lastError=syncExplain(e);c2.lastErrorAt=tsNow();syncSave(c2);
+    renderSyncStat();toast('auto-push failed — everything is saved here. open cloud sync for why','err')})},4000)}
+
+/* ── the dialog ── */
+function readSyncFields(){const c=syncCfg();
+  c.url=$('syncUrl').value.trim();c.token=$('syncTok').value.trim();
+  c.device=$('syncDev').value.trim().slice(0,24);c.auto=$('syncAuto').checked;
+  syncSave(c);return c}
+function renderSyncStat(){
+  const c=syncCfg(),el=$('syncStat');
+  if(!el)return;
+  const chip=$('syncK');
+  if(chip)chip.textContent=!syncOn()?'off':c.lastError?'error':c.auto?'auto':'on';
+  const local=location.protocol==='file:';
+  if(!syncOn()){el.textContent='not configured — this ledger has made no network request.'+
+    (local?'\n\nopened from a file on disk. a page loaded over file:// has no origin, so no database will accept its calls — sync works from the hosted copy, and this copy stays local-only.':'')}
+  else el.innerHTML='endpoint <b>'+esc(syncEndpoint(c.url))+'</b>\n'+
+    'last push <b>'+tsShort(c.lastPush)+'</b> · last pull <b>'+tsShort(c.lastPull)+'</b>\n'+
+    'server copy as of your last check: <b>'+(c.lastSeen?tsShort(c.lastSeen):'not checked')+'</b>'+
+    (c.bytes?' · '+Math.round(c.bytes/1024)+'kb':'')+
+    (c.auto?'\nauto-push is on: every change is pushed 4s later.':'\nauto-push is off: nothing leaves this browser until you press push.')+
+    (local?'\n\nthis copy is open from a file on disk — file:// pages have no origin and databases refuse them. use the hosted copy to sync.':'');
+  const ebox=$('syncErr');
+  ebox.classList.toggle('hide',!c.lastError);
+  if(c.lastError)ebox.innerHTML='<b>last attempt failed '+esc(tsShort(c.lastErrorAt))+'</b>'+esc(c.lastError).replace(/\n/g,'<br>')}
+function openSync(){const c=syncCfg();
+  $('syncUrl').value=c.url||'';$('syncTok').value=c.token||'';
+  $('syncDev').value=c.device||'';$('syncAuto').checked=!!c.auto;
+  renderSyncStat();mopen('ovSync')}
+function syncBusy(on){['syncTest','syncPull','syncPush'].forEach(id=>{$(id).disabled=on});
+  $('syncStat').style.opacity=on?'.5':''}
+async function syncRun(okMsg,failMsg,fn){
+  readSyncFields();
+  if(!syncOn()){toast('paste a database url and a token first','err');return}
+  syncBusy(true);
+  try{const r=await fn();if(r!==false&&okMsg)toast(okMsg)}
+  catch(e){const c=syncCfg();c.lastError=syncExplain(e);c.lastErrorAt=tsNow();syncSave(c);toast(failMsg,'err')}
+  finally{syncBusy(false);renderSyncStat()}}
+$('syncTest').onclick=()=>syncRun(null,'could not reach the database',async()=>{
+  await tursoExec(SYNC_DDL);
+  const m=await remoteMeta();
+  const c=syncCfg();c.lastError='';if(m)c.lastSeen=m.updated;syncSave(c);
+  toast(m?'connected — a copy from '+m.device+' is already there ('+tsShort(m.updated)+')':'connected — table ready, nothing stored yet');
+  return false});
+$('syncPush').onclick=()=>syncRun('pushed to the server','push failed — nothing here changed',()=>syncPush(false));
+$('syncPull').onclick=()=>syncRun(null,'pull failed — nothing here changed',()=>syncPull());
+['syncUrl','syncTok','syncDev'].forEach(id=>$(id).addEventListener('change',()=>{readSyncFields();renderSyncStat()}));
+$('syncAuto').addEventListener('change',()=>{const c=readSyncFields();
+  toast(c.auto?'auto-push on — changes go up 4s after you make them':'auto-push off — nothing leaves this browser unless you press push');
+  renderSyncStat()});
+
 /* ═══ theme ═══ */
 function resolvedTheme(){
   if(state.theme==='system'){try{return matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}catch(e){return 'dark'}}
@@ -2517,6 +2737,7 @@ menu.addEventListener('click',e=>{e.stopPropagation();
   else if(a==='export-csv')exportCSV();
   else if(a==='export-inv')exportContribCSV();
   else if(a==='import')$('fileInput').click();
+  else if(a==='sync')openSync();
   else if(a==='settings')openSettings();
   else if(a==='seed')seed();
   else if(a==='reset-month')closeMonth();

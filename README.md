@@ -40,6 +40,7 @@ CDN is gone.
 | **history** | Closed months, browsable read-only exactly as they were, and a spending trend across them |
 | **quick add** | `q`, then `240 groceries oats`, then enter. The parse preview sits in the bar so you see what will be saved before you commit it |
 | **data** | JSON backup, CSV export of expenses and contributions, JSON/CSV import, and an erase that asks first |
+| **cloud sync** | Optional. One Turso row holds the whole ledger so two machines can share it — off until you configure it, manual unless you tick auto. See [`SETUP-turso.md`](SETUP-turso.md) |
 
 Keyboard: `1`–`5` sections, `a` add expense, `i` record contribution, `q` quick
 add, `/` search, `u` undo, `t` theme, `[` `]` step months, `?` the full list.
@@ -81,6 +82,15 @@ every destructive action leaves an undo on the toast.
 filter — every colour pair in both clears WCAG AA, including the muted labels
 (4.5:1 and up, measured, not eyeballed).
 
+**Sync replaces, and says so, rather than pretending to merge.** One row holds
+the whole ledger, so a push overwrites the server and a pull overwrites this
+browser. Rather than dress that up, the pull dialog prints both sides first —
+expenses 214 here against 209 there, and which machine wrote the server copy
+when — takes an undo snapshot before it applies, and aborts untouched if the row
+does not parse as a ledger. A push that would clobber a copy written after your
+last sync asks first, and the automatic push refuses that case outright instead
+of opening a dialog four seconds after a keystroke.
+
 **It prints.** The open section, in the paper palette whatever your screen is
 set to, with the controls and entry forms dropped and the status line unfixed
 into a footer carrying the month, the net and the savings rate — because a
@@ -93,7 +103,8 @@ printed sheet that does not say which month it covers is worth nothing.
 | | |
 |---|---|
 | Where it lives | `localStorage`, under one key, in the browser you typed it into |
-| What leaves the browser | Nothing, unless you turn on cloud sync (off by default, see `SETUP-turso.md`) |
+| What leaves the browser | Nothing, unless you configure cloud sync. With it unconfigured the page makes zero network requests — checked by recording every request the page issues, not assumed |
+| Sync credentials | A separate storage key, never inside the ledger — so an exported backup carries no token |
 | Analytics / telemetry | None. There is no third-party request of any kind |
 | Getting it out | JSON backup (round-trips exactly), CSV of expenses, CSV of contributions |
 | Schema changes | Versioned, migrated on load, and announced in a toast — never silently |
