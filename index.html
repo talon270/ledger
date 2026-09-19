@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="light" data-palette="graphite">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -34,90 +34,117 @@
 </script>
 <style>
 /* ════════════════════════════════════════════════════════════════════════════
-   LEDGER · SKIN — "neomorphic"
+   LEDGER · SKIN — soft relief, three palettes
    · One surface, lit from the top-left. Every element is the SAME colour as the
      page; it is told apart by relief, not by fill. --up extrudes it, --down
-     presses it in, --flat is the hairline version for rows inside a card.
+     presses it in.
    · Inputs are pressed in, buttons stand out. That is the whole affordance
      grammar, and it is the one thing this style gets right that a flat UI does
      not: you can see where you are meant to type.
-   · Where neomorphism normally fails is text. It does not fail here: the ink
-     tones are unchanged from the e-ink build (--fg0 at 13.3:1 on the surface in
-     paper, 12.1:1 in night), the primary action stays a filled sepia block
-     rather than a same-colour bump, and the focus ring is a real outline. A
-     control whose only signal is a 6px shadow is unusable in sunlight — so no
-     control here has only that.
-   · Colour is kept only where it carries a fact (over budget, gain, loss) and
-     is desaturated to a printed-ink wash.
-   Palette tokens keep their legacy names (--bg0..--bg4, --fg0..--fg4, --red…)
-   because render code emits `var(--x)` inline.
+   · Where this style normally fails is legibility, so relief is never the only
+     signal: body ink sits above 13:1 on the surface in every palette, the
+     primary action is a filled block rather than a same-colour bump, and focus
+     is a real outline. A control you can only find by its shadow is unusable
+     in sunlight.
+   · Colour is kept only where it carries a fact — red over budget, green gain,
+     blue an auto-generated entry, aqua an investment, orange a warning. The
+     accent is deliberately NOT in any of those families, so it can mean "this
+     is the thing you press" and nothing else.
+
+   TWO AXES. --data-palette picks the hue (graphite / slate / sage), data-theme
+   picks day or night; six blocks, every one measured. Every pair of ink on its
+   own surface clears WCAG AA in all six — worst case 4.83:1, checked by
+   computing the ratios, not by eye.
+
+   The colour blocks below are GENERATED from one table so the shipped values
+   and the measured ones cannot drift apart. A light block stays in force under
+   its dark one, so each dark block redefines every token — a token a dark
+   block forgets leaks its light value through.
+
+   Token names are legacy (--bg0..--bg4, --fg0..--fg4, --red…) because render
+   code emits `var(--x)` inline.
    ════════════════════════════════════════════════════════════════════════════ */
 
-/* ── day ── */
+/* ── structure: shape and light, shared by every palette ── */
 :root{
-  /* the one surface. bg0h (page) and bg0 (card) are deliberately IDENTICAL —
-     relief does the separating. bg1/bg2 exist only as recessed wells and
-     dividers, so they stay within a few points of it. */
-  --bg0h:#e9e5dd; --bg0:#e9e5dd; --bg1:#e2ded5; --bg2:#d5d0c5; --bg3:#a8a294; --bg4:#8b8474;
-  --fg0:#1a1814; --fg1:#33302a; --fg2:#4d483f; --fg3:#65604f; --fg4:#686252; --gray:#686252;
-  --red:#9b3222; --green:#3a6430; --yellow:#7f611b; --blue:#2b5674; --purple:#653f68; --aqua:#2a665b; --orange:#8a5410;
-  --red-d:#7c281b; --green-d:#325528; --yellow-d:#6e5518; --blue-d:#254a63; --purple-d:#573658; --aqua-d:#25594f; --orange-d:#815114;
-
-  /* the two lights. every shadow in the file is built from exactly these. */
-  --nm-lt:#ffffff;
-  --nm-dk:#bfb9ab;
   --up:6px 6px 13px var(--nm-dk),-6px -6px 13px var(--nm-lt);
   --up-sm:3px 3px 6px var(--nm-dk),-3px -3px 6px var(--nm-lt);
   --up-xs:2px 2px 4px var(--nm-dk),-2px -2px 4px var(--nm-lt);
   --down:inset 3px 3px 6px var(--nm-dk),inset -3px -3px 6px var(--nm-lt);
   --down-sm:inset 2px 2px 4px var(--nm-dk),inset -2px -2px 4px var(--nm-lt);
-  --float:0 20px 52px rgba(26,24,20,.30),0 3px 10px rgba(26,24,20,.14);
-
-  --line:rgba(26,24,20,.05); /* hairline. kept at 5% — relief alone loses the
-                                edge of a card on a dim or glossy screen */
-  --rule:#1a1814;
-  --veil:#1a1814;
-  --on-rule:#e9e5dd;
-  --acc:#8a5a2b;
-  --acc-h:#734822;
-  --on-acc:#faf8f3;
-  --ring:rgba(138,90,43,.16);
-  --ctl:#e9e5dd;
-  --fs:14.5px;
+  --soft:var(--float);
+  --fs:14.5px;                         /* reading size. the Aa control moves this */
   --r:12px; --r-sm:9px; --r-lg:20px;   /* relief needs radius: a sharp corner
                                           reads as a rendering artefact here */
-  --soft:var(--float);
   --serif:'Bookerly','Literata','Iowan Old Style','Source Serif 4','Charter',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --accent:var(--acc);
 }
-/* ── night: the same surface under one lamp. The highlight cannot be white
-      here — white on a near-black card is a rim light, not a soft edge — so it
-      drops to a lifted grey and the shade goes to near-black. ── */
-[data-theme="dark"]{
-  --bg0h:#232120; --bg0:#232120; --bg1:#1f1d1c; --bg2:#2e2b29; --bg3:#4b463f; --bg4:#6d675c;
-  --fg0:#ece7dd; --fg1:#dbd5c9; --fg2:#bfb8aa; --fg3:#9b9484; --fg4:#958e7c; --gray:#958e7c;
-  --red:#d9715c; --green:#8aab6a; --yellow:#c9a75a; --blue:#7099b8; --purple:#b087b3; --aqua:#6aa99a; --orange:#c98a4e;
-  --red-d:#b45a48; --green-d:#6f8b55; --yellow-d:#a3853f; --blue-d:#5a7d96; --purple-d:#8f6e92; --aqua-d:#a5713f; --orange-d:#a5713f;
 
-  --nm-lt:#2f2c2a;
-  --nm-dk:#141312;
-  --up:6px 6px 13px var(--nm-dk),-6px -6px 13px var(--nm-lt);
-  --up-sm:3px 3px 6px var(--nm-dk),-3px -3px 6px var(--nm-lt);
-  --up-xs:2px 2px 4px var(--nm-dk),-2px -2px 4px var(--nm-lt);
-  --down:inset 3px 3px 6px var(--nm-dk),inset -3px -3px 6px var(--nm-lt);
-  --down-sm:inset 2px 2px 4px var(--nm-dk),inset -2px -2px 4px var(--nm-lt);
+/* ── the palettes (generated — see the note above) ── */
+/* graphite — near-neutral grey, indigo accent · light */
+:root[data-palette="graphite"]{
+  --bg0h:#e6e6e9; --bg0:#e6e6e9; --bg1:#dedee2; --bg2:#cdcdd3; --bg3:#9797a0; --bg4:#70707b;
+  --fg0:#131317; --fg1:#26262b; --fg2:#3b3b43; --fg3:#4d4d57; --fg4:#52525c;
+  --red:#a52f2f; --green:#316437; --yellow:#7b5c14; --blue:#2b5793; --purple:#5b3f96; --aqua:#1f6166; --orange:#8a5115;
+  --nm-lt:#ffffff; --nm-dk:#bbbbc4;
+  --float:0 20px 52px rgba(19,19,23,.30),0 3px 10px rgba(19,19,23,.14);
+  --line:rgba(19,19,23,.05); --rule:#131317; --veil:#131317; --on-rule:#e6e6e9;
+  --acc:#4a44a8; --acc-h:#3a3589; --on-acc:#ffffff; --ring:rgba(74,68,168,.16); --ctl:#e6e6e9;
+}
+
+/* slate — cool blue-grey, steel-blue accent · light */
+:root[data-palette="slate"]{
+  --bg0h:#e3e7ee; --bg0:#e3e7ee; --bg1:#dbdfe8; --bg2:#cad0dc; --bg3:#959daf; --bg4:#6e778a;
+  --fg0:#11151c; --fg1:#242a34; --fg2:#3a414e; --fg3:#4c5464; --fg4:#515969;
+  --red:#a32f28; --green:#2f6640; --yellow:#7a5c12; --blue:#28568f; --purple:#5f4189; --aqua:#1f6268; --orange:#8a5010;
+  --nm-lt:#ffffff; --nm-dk:#b4bccb;
+  --float:0 20px 52px rgba(17,21,28,.30),0 3px 10px rgba(17,21,28,.14);
+  --line:rgba(17,21,28,.05); --rule:#11151c; --veil:#11151c; --on-rule:#e3e7ee;
+  --acc:#2b5d9e; --acc-h:#224b82; --on-acc:#ffffff; --ring:rgba(43,93,158,.16); --ctl:#e3e7ee;
+}
+
+/* sage — grey-green, deep teal accent · light */
+:root[data-palette="sage"]{
+  --bg0h:#e3e8e3; --bg0:#e3e8e3; --bg1:#dbe1db; --bg2:#cad2ca; --bg3:#95a096; --bg4:#6e7a70;
+  --fg0:#121713; --fg1:#242c26; --fg2:#39433b; --fg3:#4b564d; --fg4:#505b52;
+  --red:#a13227; --green:#2f6437; --yellow:#795e13; --blue:#2a5680; --purple:#614284; --aqua:#1e6459; --orange:#875312;
+  --nm-lt:#ffffff; --nm-dk:#b5bdb6;
+  --float:0 20px 52px rgba(18,23,19,.30),0 3px 10px rgba(18,23,19,.14);
+  --line:rgba(18,23,19,.05); --rule:#121713; --veil:#121713; --on-rule:#e3e8e3;
+  --acc:#2c6a55; --acc-h:#225544; --on-acc:#ffffff; --ring:rgba(44,106,85,.16); --ctl:#e3e8e3;
+}
+
+/* graphite — near-neutral grey, indigo accent · dark */
+:root[data-palette="graphite"][data-theme="dark"]{
+  --bg0h:#26262a; --bg0:#26262a; --bg1:#212125; --bg2:#313137; --bg3:#484852; --bg4:#6c6c78;
+  --fg0:#eaeaef; --fg1:#d8d8de; --fg2:#bbbbc4; --fg3:#9696a1; --fg4:#91919c;
+  --red:#e27b72; --green:#89b083; --yellow:#cbac60; --blue:#7fa6e2; --purple:#a99bec; --aqua:#66aeb2; --orange:#cf9059;
+  --nm-lt:#323238; --nm-dk:#161619;
   --float:0 20px 52px rgba(0,0,0,.62),0 3px 10px rgba(0,0,0,.45);
+  --line:rgba(234,234,239,.06); --rule:#eaeaef; --veil:#000; --on-rule:#161619;
+  --acc:#a29cf2; --acc-h:#b9b4f7; --on-acc:#15131f; --ring:rgba(162,156,242,.20); --ctl:#26262a;
+}
 
-  --line:rgba(236,231,221,.06);
-  --rule:#ece7dd; --on-rule:#141311;
-  /* the wipe must NOT follow --rule here. A white sheet over a near-black page
-     at 9% is a 43% brightness spike: a camera flash, not a page turn. */
-  --veil:#000;
-  --acc:#c69a6d; --acc-h:#d9b087; --on-acc:#17160f;
-  --ctl:#232120;
-  --ring:rgba(198,154,109,.20);
-  --soft:var(--float);
+/* slate — cool blue-grey, steel-blue accent · dark */
+:root[data-palette="slate"][data-theme="dark"]{
+  --bg0h:#23262d; --bg0:#23262d; --bg1:#1f2228; --bg2:#2e323a; --bg3:#464d59; --bg4:#69727f;
+  --fg0:#e7eaf1; --fg1:#d5d9e2; --fg2:#b8bec9; --fg3:#939bab; --fg4:#8e96a6;
+  --red:#e0796a; --green:#84b083; --yellow:#c9ab5e; --blue:#7ba9e0; --purple:#a894dd; --aqua:#63aeb0; --orange:#cd8f57;
+  --nm-lt:#2f333c; --nm-dk:#14161a;
+  --float:0 20px 52px rgba(0,0,0,.62),0 3px 10px rgba(0,0,0,.45);
+  --line:rgba(231,234,241,.06); --rule:#e7eaf1; --veil:#000; --on-rule:#14161a;
+  --acc:#82aae8; --acc-h:#9dbdef; --on-acc:#12161d; --ring:rgba(130,170,232,.20); --ctl:#23262d;
+}
+
+/* sage — grey-green, deep teal accent · dark */
+:root[data-palette="sage"][data-theme="dark"]{
+  --bg0h:#232823; --bg0:#232823; --bg1:#1f241f; --bg2:#2e342e; --bg3:#465046; --bg4:#6a756c;
+  --fg0:#e7ece7; --fg1:#d5dbd6; --fg2:#b8c0b9; --fg3:#939d95; --fg4:#8e988f;
+  --red:#df7b68; --green:#86b381; --yellow:#c7ac5d; --blue:#7ba6c9; --purple:#a695cf; --aqua:#66b39e; --orange:#cb9159;
+  --nm-lt:#2f352f; --nm-dk:#141814;
+  --float:0 20px 52px rgba(0,0,0,.62),0 3px 10px rgba(0,0,0,.45);
+  --line:rgba(231,236,231,.06); --rule:#e7ece7; --veil:#000; --on-rule:#141814;
+  --acc:#74bb9c; --acc-h:#8fcbb0; --on-acc:#12190f; --ring:rgba(116,187,156,.20); --ctl:#232823;
 }
 
 *{box-sizing:border-box}
@@ -580,7 +607,9 @@ code{font-size:.92em;background:var(--bg1);box-shadow:var(--down-sm);border-radi
    nothing. Controls, row actions and entry forms are not printed. ══ */
 @media print{
   @page{margin:14mm}
-  :root,[data-theme="dark"]{
+  /* (0,3,0) to outrank the dark palette blocks, which are also (0,3,0) and
+     would otherwise win on source order and print a dark page. */
+  :root,:root[data-palette],:root[data-palette][data-theme]{
     --bg0h:#fff; --bg0:#fff; --bg1:#fff; --bg2:#ddd; --line:#c8c8c8;
     --fg0:#000; --fg1:#1a1a1a; --fg2:#333; --fg3:#4a4a4a; --fg4:#5c5c5c;
     --soft:none; --ctl:#fff;
@@ -1035,8 +1064,13 @@ code{font-size:.92em;background:var(--bg1);box-shadow:var(--down-sm);border-radi
       <option value="auto">auto (from currency)</option>
       <option value="indian">indian — k / l / cr</option>
       <option value="intl">international — k / M / B</option></select></div>
-    <div class="field full"><label for="setTheme">theme</label><select class="inp" id="setTheme">
+    <div class="field"><label for="setTheme">theme</label><select class="inp" id="setTheme">
       <option value="dark">dark</option><option value="light">light</option><option value="system">follow system</option></select></div>
+    <div class="field"><label for="setPal">palette</label><select class="inp" id="setPal">
+      <option value="graphite">graphite — indigo</option>
+      <option value="slate">slate — steel blue</option>
+      <option value="sage">sage — deep teal</option></select></div>
+    <p class="hint full" style="margin:0">both apply as you pick them. cancel puts back what you had.</p>
     <div class="field full"><label class="chk"><input type="checkbox" id="setRoll"> remind me to close the month when a new one starts</label></div>
     <p class="hint" id="setPrev">preview: —</p>
   </div></div>
@@ -1152,8 +1186,22 @@ code{font-size:.92em;background:var(--bg1);box-shadow:var(--down-sm);border-radi
    lightness so they separate as pie slices and as 8px dots without any of them
    shouting. Categories already saved keep the colour they were given — this list
    only feeds new ones and the swatch picker. */
-const PAL = ['#8a5a2b','#2f5d7c','#3f6b33','#9b3222','#6d4470','#2f6f63',
-             '#8a6a1f','#5b6670','#a2651a','#6b4f7c','#4a6b4a','#7a5448'];
+/* Category and asset swatches. NOT theme tokens: each category stores the hex
+   it was given, so editing this array repaints nothing that already exists —
+   it only decides what the next new category or asset gets.
+
+   The two browns are replaced: #8a5a2b → #c94d81, #7a5448 → #2d8596. Both
+   replacements clear 3:1 (the non-text bar) against all six surfaces, at 3.47
+   and 3.44; the browns managed 2.56 and 2.28.
+
+   KNOWN, PRE-EXISTING, NOT FIXED HERE: the other ten hues were chosen against
+   the old light paper and eight of them sit between 1.94:1 and 2.97:1 on the
+   dark surfaces — legible as a 9px dot next to its own label, thin as a meter
+   fill. Fixing it means re-tuning all twelve into the narrow luminance band
+   that clears both extremes (roughly L 0.15–0.23), and it would not repaint a
+   single category anyone already has. Left alone deliberately. */
+const PAL = ['#c94d81','#2f5d7c','#3f6b33','#9b3222','#6d4470','#2f6f63',
+             '#8a6a1f','#5b6670','#a2651a','#6b4f7c','#4a6b4a','#2d8596'];
 const KEY='ledger.gruv.v2';
 const HAS_CHART=typeof Chart!=='undefined';
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -1180,9 +1228,18 @@ const isYM=v=>typeof v==='string'&&/^\d{4}-\d{2}$/.test(v);
    · goals[].ledger  dated deposits/withdrawals. The v3 `saved` scalar had no
                      provenance — it was a number you typed and nothing checked.
    · holdings[].marks  optional manual valuations, each with the date it was taken.
-                     Never interpolated, never carried forward silently. */
-const SCHEMA_VERSION=4;
-function defaults(){return{version:SCHEMA_VERSION,theme:'light',textSize:'m',currency:'₹',numFmt:'auto',rollReminder:true,
+                     Never interpolated, never carried forward silently.
+
+   SCHEMA 5 — what changed from 4:
+   · palette         which of the three hue sets is in force. Purely a display
+                     setting: it touches no recorded figure, and a ledger saved
+                     before it existed simply adopts the default. Bumped anyway
+                     rather than read as an undeclared field, because a shape
+                     that changes without a version is the thing that makes the
+                     NEXT migration unsafe. */
+const SCHEMA_VERSION=5;
+const PALETTES=['graphite','slate','sage'];
+function defaults(){return{version:SCHEMA_VERSION,theme:'light',palette:'graphite',textSize:'m',currency:'₹',numFmt:'auto',rollReminder:true,
   currentMonth:monthStr(),incomeSources:[],income:[],categories:[],expenses:[],recurring:[],goals:[],
   holdings:[],contributions:[],archives:[]}}
 
@@ -1202,6 +1259,7 @@ function normalize(raw){
 
   const s={version:SCHEMA_VERSION,
     theme:['dark','light','system'].includes(raw.theme)?raw.theme:d.theme,
+    palette:PALETTES.includes(raw.palette)?raw.palette:d.palette,
     textSize:['s','m','l'].includes(raw.textSize)?raw.textSize:d.textSize,
     currency:cleanCur(raw.currency??d.currency),
     numFmt:['auto','indian','intl'].includes(raw.numFmt)?raw.numFmt:'auto',
@@ -2159,6 +2217,7 @@ function mopen(id){lastFocus=document.activeElement;const o=$(id);o.classList.ad
   const f=focusables(o);(f.find(x=>!x.hasAttribute('data-close'))||f[0])?.focus()}
 function mclose(id){const o=$(id);if(!o.classList.contains('open'))return;
   o.classList.remove('open');
+  if(id==='ovSet')applyLook();   /* drop any unsaved live preview */
   if(lastFocus&&document.contains(lastFocus))lastFocus.focus();
   lastFocus=null}
 function closeAll(){document.querySelectorAll('.ov.open').forEach(o=>mclose(o.id))}
@@ -2533,8 +2592,19 @@ $('addRecvBtn').onclick=()=>{if(guardRO())return;
 /* ═══ settings ═══ */
 function openSettings(){
   $('setCur').value=state.currency;$('setNum').value=state.numFmt;
-  $('setTheme').value=state.theme;$('setRoll').checked=state.rollReminder!==false;
+  $('setTheme').value=state.theme;$('setPal').value=state.palette;
+  $('setRoll').checked=state.rollReminder!==false;
   updateSetPreview();mopen('ovSet')}
+/* A palette is a thing you judge by looking at it, so it applies live while the
+   dialog is open. mclose() is the one choke point every close path goes
+   through — overlay click, the x, cancel, esc — so reapplying from state there
+   puts back what was saved and makes the preview free. setSave writes state
+   first, which makes the same call a no-op on the way out. */
+['setTheme','setPal'].forEach(id=>$(id).addEventListener('change',()=>{
+  const t=state.theme,p=state.palette;
+  state.theme=$('setTheme').value;state.palette=$('setPal').value;
+  applyLook();
+  state.theme=t;state.palette=p}));
 function updateSetPreview(){
   const cur=cleanCur($('setCur').value),mode=$('setNum').value;
   const prev={currency:state.currency,numFmt:state.numFmt};
@@ -2544,12 +2614,13 @@ function updateSetPreview(){
 ['setCur','setNum'].forEach(id=>$(id).addEventListener('input',updateSetPreview));
 $('setSave').onclick=()=>{
   snap('settings');
+  state.palette=PALETTES.includes($('setPal').value)?$('setPal').value:'graphite';
   const raw=$('setCur').value.trim(),cur=cleanCur(raw);
   state.currency=cur;
   state.numFmt=['auto','indian','intl'].includes($('setNum').value)?$('setNum').value:'auto';
   state.theme=['dark','light','system'].includes($('setTheme').value)?$('setTheme').value:'dark';
   state.rollReminder=$('setRoll').checked;
-  save();applyTheme();mclose('ovSet');renderAll();
+  save();applyLook();mclose('ovSet');renderAll();
   toast(cur===raw?'settings saved':`settings saved · currency kept as "${cur}" (symbols only, 3 chars max)`)};
 $('helpBtn').onclick=()=>mopen('ovHelp');
 
@@ -2888,10 +2959,19 @@ function resolvedTheme(){
   if(state.theme==='system'){try{return matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}catch(e){return 'dark'}}
   return state.theme==='light'?'light':'dark'}
 function applyTheme(){const t=resolvedTheme();
+  const p=PALETTES.includes(state.palette)?state.palette:'graphite';
   document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-palette',p);
   $('themeBtn').textContent=t==='dark'?'◐ dark':'◑ light';
-  $('themeColor').setAttribute('content',t==='dark'?'#232120':'#e9e5dd')}
-$('themeBtn').onclick=()=>{state.theme=resolvedTheme()==='dark'?'light':'dark';applyTheme();save();renderGauge();renderCharts()};
+  /* the phone's chrome bar follows the surface, read back off the root once the
+     attributes are set rather than kept as a second copy of the six hexes — a
+     duplicate list is a list that goes stale. */
+  const surf=getComputedStyle(document.documentElement).getPropertyValue('--bg0').trim();
+  $('themeColor').setAttribute('content',surf||'#e6e6e9')}
+/* charts bake their colours in at draw time, so anything that moves a token
+   has to redraw them or the page ends up half in the old palette */
+function applyLook(){applyTheme();renderGauge();renderCharts()}
+$('themeBtn').onclick=()=>{state.theme=resolvedTheme()==='dark'?'light':'dark';save();applyLook()};
 
 /* ═══ reading size ═══
    One value moves: every piece of prose is sized in em off the body, so the
@@ -3121,7 +3201,12 @@ if(migratedFrom!==null){
   save();
   /* say it out loud rather than upgrading in silence — a schema change moved
      the user's data and they are entitled to know before they trust a number */
-  setTimeout(()=>toast(`data upgraded from schema v${migratedFrom} to v${SCHEMA_VERSION} — goal progress and any old cost basis became dated opening entries`),600)}
+  /* say what actually moved, per version. Announcing a data rewrite that did
+     not happen is its own kind of lie. */
+  const what=migratedFrom<4
+    ? 'goal progress and any old cost basis became dated opening entries'
+    : 'nothing was rewritten — v5 only adds the colour palette setting';
+  setTimeout(()=>toast(`data upgraded from schema v${migratedFrom} to v${SCHEMA_VERSION} — ${what}`),600)}
 if(!HAS_CHART)chartsUnavailable();
 
 </script>

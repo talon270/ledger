@@ -40,7 +40,7 @@ CDN is gone.
 | **investments** | A contribution ledger: what you put in, optional manual marks for what it is worth now, split by asset and by class |
 | **history** | Closed months, browsable read-only exactly as they were, and a spending trend across them |
 | **quick add** | `q`, then `240 groceries oats`, then enter. The parse preview sits in the bar so you see what will be saved before you commit it |
-| **data** | JSON backup, CSV export of expenses and contributions, JSON/CSV import, and an erase that asks first |
+| **data** | JSON backup, CSV export of expenses and contributions, JSON/CSV import, palette and theme, and an erase that asks first |
 | **cloud sync** | Optional. One Turso row holds the whole ledger so two machines can share it — off until you configure it, manual unless you tick auto. See [`SETUP-turso.md`](SETUP-turso.md) |
 
 Keyboard: `1`–`5` sections, `a` add expense, `i` record contribution, `q` quick
@@ -90,15 +90,27 @@ styled, and freeze headless browsers so nothing destructive can ever be tested.
 Every confirmation is an in-page dialog whose keyboard default is *cancel*, and
 every destructive action leaves an undo on the toast.
 
-**Both themes are equal citizens.** Paper and night are the same design, not a
-filter — every colour pair in both clears WCAG AA, including the muted labels
-(4.5:1 and up, measured, not eyeballed). The surface is soft-relief: page and
-card are the *same* colour and are told apart by light, so the whole affordance
-grammar is one rule — **a field is pressed in, a control sticks out.** Where
-that style usually fails is legibility, so it is not allowed to carry meaning
-alone here: body ink sits at 14:1, the primary action stays a filled block
-rather than a same-colour bump, and focus is a real outline. A control whose
-only signal is a 6px shadow is unusable in sunlight.
+**Three palettes and two modes, and all six are equal citizens.** Graphite
+(indigo), slate (steel blue) and sage (deep teal), each in day and night —
+switch in `data ▸ settings`, applied live as you pick it, reverted if you
+cancel. Every one of the 16 ink-on-surface pairs clears WCAG AA in all six
+blocks: worst case **4.83:1**, body ink **12.5:1 or better**, computed from the
+shipped stylesheet rather than eyeballed. The six colour blocks are generated
+from one table so the values that ship and the values that were measured cannot
+drift apart.
+
+**The accent is deliberately not a colour that already means something.** Red is
+over budget, green is a gain, blue marks an auto-generated entry, aqua an
+investment, orange a warning. An accent drawn from any of those families makes
+the primary button read as a status, so it is indigo, steel blue or teal
+depending on the palette — chosen in each case to sit outside the semantic set.
+
+**The surface is soft relief: page and card are the *same* colour, told apart by
+light.** The whole affordance grammar is one rule — **a field is pressed in, a
+control sticks out.** Where that style usually fails is legibility, so it is
+never the only signal: the primary action is a filled block rather than a
+same-colour bump, and focus is a real outline. A control you can only find by
+its shadow is unusable in sunlight.
 
 **Sync replaces, and says so, rather than pretending to merge.** One row holds
 the whole ledger, so a push overwrites the server and a pull overwrites this
